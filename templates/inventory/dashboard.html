@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Geräte · Geräteinventar{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3"><h1>Geräte</h1><a class="btn btn-primary" href="{% url 'assistant_search:chat' %}">Mit KI suchen</a></div>
+<form method="get" class="row g-2 mb-4" role="search"><div class="col-md-8"><input class="form-control" name="q" value="{{ query }}" placeholder="Bezeichnung, Hersteller, Modell oder Beschreibung" aria-label="Geräte suchen"></div><div class="col-auto"><button class="btn btn-outline-primary">Suchen</button></div></form>
+<div class="list-group">
+{% for item in items %}
+  <a class="list-group-item list-group-item-action" href="{{ item.get_absolute_url }}"><strong>{{ item.name }}</strong><span class="text-muted"> · {{ item.category.path }}</span><br><small>{{ item.manufacturer }} {{ item.model_number }} · {{ item.get_condition_display }}{% if item.current_booking %} · Ausgeliehen bis {{ item.current_booking.end_date|date:"d.m.Y" }}{% endif %}</small></a>
+{% empty %}<div class="alert alert-info">Noch keine Geräte gefunden. Verantwortliche können Geräte derzeit in der Verwaltung anlegen.</div>{% endfor %}
+</div>
+{% endblock %}

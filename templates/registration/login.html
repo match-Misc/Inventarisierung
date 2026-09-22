@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Anmelden · Geräteinventar{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-5 col-lg-4">
+  <h1 class="h3 mb-3">Anmelden</h1>
+  {% if form.errors %}<div class="alert alert-danger">Benutzername oder Passwort ist nicht korrekt.</div>{% endif %}
+  <form method="post" class="card card-body">{% csrf_token %}
+    <label for="id_username" class="form-label">Institutskennung</label>
+    <input id="id_username" name="username" autocomplete="username" class="form-control mb-3" required autofocus>
+    <label for="id_password" class="form-label">Passwort</label>
+    <input id="id_password" name="password" type="password" autocomplete="current-password" class="form-control mb-3" required>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn btn-primary" type="submit">Anmelden</button>
+  </form>
+</div></div>
+{% endblock %}

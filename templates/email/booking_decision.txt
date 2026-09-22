@@ -1,0 +1,5 @@
+Die Entscheidung zu Ihrer Buchung von {{ booking.item.name }} ist eingetragen.
+
+Status: {{ booking.get_status_display }}
+{% if booking.decision_comment %}Hinweis: {{ booking.decision_comment }}{% endif %}
+Details: {{ site_url }}/ausleihen/{{ booking.pk }}/

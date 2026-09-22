@@ -1,0 +1,4 @@
+Für {{ booking.item.name }} liegt eine Buchungs- oder Verlängerungsanfrage vor.
+
+Zeitraum: {{ booking.start_date|date:"d.m.Y" }} bis {{ booking.end_date|date:"d.m.Y" }}
+Anfrage in der Verwaltung ansehen: {{ site_url }}/ausleihen/{{ booking.pk }}/

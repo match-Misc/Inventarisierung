@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Kennwert prüfen · Geräteinventar{% endblock %}
+{% block content %}
+<h1>Kennwert für {{ proposal.item.name }} prüfen</h1>
+<p>Bitte die genaue Typvariante und den angegebenen Wert in der <a href="{{ proposal.source_url }}" rel="noopener noreferrer" target="_blank">Quelle</a> prüfen. Ein Händlerbeleg ist entsprechend gekennzeichnet.</p>
+<form method="post" class="card card-body col-lg-8">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+  {% for field in form %}<div class="mb-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<div class="text-danger">{{ field.errors }}</div>{% endif %}</div>{% endfor %}
+  <div class="d-flex gap-2"><button class="btn btn-success" name="action" value="approve">Geprüft übernehmen</button><button class="btn btn-outline-danger" name="action" value="reject" formnovalidate>Verwerfen</button></div>
+</form>
+{% endblock %}
