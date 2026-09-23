@@ -160,6 +160,7 @@ def test_provider_enforces_privacy_routing(monkeypatch, settings):
 
     def fake_urlopen(request, timeout):
         captured["payload"] = json.loads(request.data)
+        captured["timeout"] = timeout
         return FakeResponse()
 
     monkeypatch.setattr("assistant_search.provider.urlopen", fake_urlopen)
@@ -170,6 +171,10 @@ def test_provider_enforces_privacy_routing(monkeypatch, settings):
         "require_parameters": True,
     }
     assert "temperature" not in captured["payload"]
+    assert captured["timeout"] == 20
+
+    _request([{"role": "user", "content": "Beckhoff C6043"}], web=True)
+    assert captured["timeout"] == 60
 
 
 def test_provider_retries_an_incomplete_response(monkeypatch, settings):

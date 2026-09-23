@@ -1,11 +1,14 @@
 """Tests für den Bestellungen-Import (procurement.importer und der Sync-Command)."""
 
+import json
 from datetime import date
 from decimal import Decimal
 
 import pytest
 from django.core.management import call_command
 
+from assistant_search.models import SpecificationProposal
+from inventory.models import Item
 from procurement.importer import (
     detect_project,
     extract_price_from_pdf_text,
@@ -17,6 +20,7 @@ from procurement.importer import (
     scan_order_folder,
 )
 from procurement.models import PurchaseOrder
+from procurement.research import _allowed_product_source, research_device
 
 
 class TestParseFolderName:
@@ -215,3 +219,144 @@ class TestPurchaseOrderList:
         assert response.context["orders"].count() == 1
         assert b"Kraftsensor 500 N" in response.content
         assert b"navbar" in response.content
+
+
+@pytest.mark.django_db
+class TestImportPurchaseDevicesCommand:
+    def test_creates_unverified_device_and_is_idempotent(self, staff, client):
+        order = PurchaseOrder.objects.create(
+            source_folder="2014/2014-07 CalPlus_Handmultimeter",
+            name="CalPlus_Handmultimeter",
+            tool_type=PurchaseOrder.ToolType.OTHER,
+        )
+
+        call_command("import_purchase_devices", responsible=staff.username)
+        call_command("import_purchase_devices", responsible=staff.username)
+
+        order.refresh_from_db()
+        assert Item.objects.count() == 1
+        assert order.inventory_item.condition == Item.Condition.UNVERIFIED
+        assert order.inventory_item.location.path == "Noch nicht zugeordnet"
+        assert order.inventory_item.responsible == staff
+        assert order.inventory_item.category.path == "Mess- und Prüfgeräte"
+        assert order.inventory_item.loan_policy == Item.LoanPolicy.APPROVAL
+
+        client.force_login(staff)
+        response = client.get(order.inventory_item.get_absolute_url())
+        assert response.status_code == 200
+        assert "Bestellinformationen" in response.content.decode()
+        assert order.source_folder in response.content.decode()
+
+    def test_research_creates_pending_sourced_specifications(self, staff, client, monkeypatch):
+        order = PurchaseOrder.objects.create(
+            source_folder="2026/2026-05 Beckhoff IPC C6043 ML BiBaZu",
+            name="Beckhoff IPC C6043 ML BiBaZu",
+            tool_type=PurchaseOrder.ToolType.IT,
+        )
+        monkeypatch.setattr(
+            "procurement.management.commands.import_purchase_devices.research_device",
+            lambda hint: {
+                "model_match": True,
+                "product_name": "C6043",
+                "manufacturer": "Beckhoff",
+                "model_number": "C6043",
+                "category": "Industrie-PC",
+                "summary": "Kompakter Industrie-PC.",
+                "source_url": "https://example.org/c6043",
+                "source_title": "C6043",
+                "source_kind": "manufacturer",
+                "uncertainty": "",
+                "specifications": [{"property_name": "Versorgungsspannung", "value_text": "24 V DC"}],
+            },
+        )
+
+        call_command("import_purchase_devices", responsible=staff.username, research=True)
+
+        order.refresh_from_db()
+        assert order.research_status == PurchaseOrder.ResearchStatus.RESEARCHED
+        assert order.inventory_item.manufacturer == "Beckhoff"
+        assert SpecificationProposal.objects.filter(
+            item=order.inventory_item,
+            status=SpecificationProposal.Status.PENDING,
+            source_url="https://example.org/c6043",
+        ).exists()
+        client.force_login(staff)
+        response = client.get(order.inventory_item.get_absolute_url())
+        assert "Herstellerquelle" in response.content.decode()
+
+    def test_missing_exact_type_is_marked_ambiguous_without_web_request(self, staff, monkeypatch):
+        order = PurchaseOrder.objects.create(
+            source_folder="2014/2014-07 CalPlus Handmultimeter",
+            name="CalPlus_Handmultimeter",
+        )
+        called = False
+
+        def unexpected_request(hint):
+            nonlocal called
+            called = True
+
+        monkeypatch.setattr(
+            "procurement.management.commands.import_purchase_devices.research_device",
+            unexpected_request,
+        )
+
+        call_command("import_purchase_devices", responsible=staff.username, research=True)
+
+        order.refresh_from_db()
+        assert order.research_status == PurchaseOrder.ResearchStatus.AMBIGUOUS
+        assert called is False
+
+
+def test_device_research_structures_cited_web_evidence(monkeypatch):
+    source_url = "https://manufacturer.example/products/c6043"
+    calls = []
+
+    def fake_request(messages, *, schema=None, web=False, model=None, max_tokens=550):
+        calls.append({"schema": schema, "web": web})
+        if web:
+            return {
+                "content": "Der C6043 ist ein Industrie-PC mit 24-V-Versorgung.",
+                "annotations": [
+                    {
+                        "type": "url_citation",
+                        "url_citation": {
+                            "url": source_url,
+                            "title": "C6043",
+                            "content": "Versorgungsspannung 24 V DC",
+                        },
+                    }
+                ],
+            }
+        return {
+            "content": json.dumps(
+                {
+                    "model_match": True,
+                    "product_name": "C6043",
+                    "manufacturer": "Beckhoff",
+                    "model_number": "C6043",
+                    "category": "Industrie-PC",
+                    "summary": "Kompakter Industrie-PC.",
+                    "source_url": source_url,
+                    "source_title": "C6043",
+                    "source_kind": "manufacturer",
+                    "uncertainty": "",
+                    "specifications": [{"property_name": "Versorgungsspannung", "value_text": "24 V DC"}],
+                }
+            )
+        }
+
+    monkeypatch.setattr("procurement.research._request", fake_request)
+
+    result = research_device("Beckhoff C6043 industrial PC")
+
+    assert result["source_url"] == source_url
+    assert result["specifications"][0]["value_text"] == "24 V DC"
+    assert calls[0] == {"schema": None, "web": True}
+    assert calls[1]["schema"] is not None
+    assert calls[1]["web"] is False
+
+
+def test_device_research_rejects_general_reference_sites():
+    assert not _allowed_product_source("https://de.wikipedia.org/wiki/Beispiel")
+    assert not _allowed_product_source("https://www.engineering.com/example")
+    assert _allowed_product_source("https://www.beckhoff.com/products/c6043")

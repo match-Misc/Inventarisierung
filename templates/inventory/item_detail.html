@@ -51,6 +51,32 @@
         </ul>
       </div>
     {% endif %}{% endwith %}
+    {% with orders=item.purchase_orders.all %}{% if orders %}
+      <div class="card mb-4">
+        <div class="card-header">Bestellinformationen</div>
+        <div class="list-group list-group-flush">
+          {% for order in orders %}
+            <div class="list-group-item">
+              <div class="fw-semibold">{{ order.name }}</div>
+              <dl class="row small mb-0 mt-2">
+                {% if order.company %}<dt class="col-sm-4">Firma</dt><dd class="col-sm-8">{{ order.company }}</dd>{% endif %}
+                {% if order.price %}<dt class="col-sm-4">Preis</dt><dd class="col-sm-8">{{ order.price }} €</dd>{% endif %}
+                {% if order.purchase_date %}<dt class="col-sm-4">Kaufdatum</dt><dd class="col-sm-8">{{ order.purchase_date|date:"m/Y" }}</dd>{% endif %}
+                {% if order.project %}<dt class="col-sm-4">Projekt</dt><dd class="col-sm-8">{{ order.project }}</dd>{% endif %}
+                <dt class="col-sm-4">Bestellordner</dt><dd class="col-sm-8">{{ order.source_folder }}</dd>
+                {% if order.datasheet_path %}<dt class="col-sm-4">Datenblatt</dt><dd class="col-sm-8">{{ order.datasheet_path }}</dd>{% endif %}
+              </dl>
+              {% if order.research_summary %}
+                <div class="alert alert-secondary small mb-0 mt-2">
+                  <strong>Ungeprüfte Recherche:</strong> {{ order.research_summary }}
+                  {% if order.research_source_url %}<a href="{{ order.research_source_url }}" rel="noopener noreferrer" target="_blank">{% if order.research_data.source_kind == "manufacturer" %}Herstellerquelle{% else %}Händlerquelle{% endif %} öffnen</a>{% endif %}
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}{% endwith %}
     {% if accessories %}
       <div class="card mb-4">
         <div class="card-header">Zubehör</div>

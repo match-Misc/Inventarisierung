@@ -2,6 +2,7 @@
 
 import json
 import logging
+import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -16,13 +17,13 @@ class ProviderUnavailable(Exception):
     pass
 
 
-def _request(messages, *, schema=None, web=False, model=None):
+def _request(messages, *, schema=None, web=False, model=None, max_tokens=550):
     if not settings.OPENROUTER_API_KEY:
         raise ProviderUnavailable("Kein KI-Schlüssel konfiguriert.")
     payload = {
         "model": model or settings.ASSISTANT_MODEL,
         "messages": messages,
-        "max_tokens": 550,
+        "max_tokens": max_tokens,
         "provider": {
             "zdr": True,
             "data_collection": "deny",
@@ -58,10 +59,13 @@ def _request(messages, *, schema=None, web=False, model=None):
         },
         method="POST",
     )
+    timeout = 60 if web else 20
     last_error = None
-    for attempt in range(2):
+    attempts = 5 if web else 2
+    retry_delays = (2, 5, 10, 20)
+    for attempt in range(attempts):
         try:
-            with urlopen(request, timeout=20) as response:
+            with urlopen(request, timeout=timeout) as response:
                 data = json.load(response)
             message = data["choices"][0]["message"]
             if not isinstance(message, dict) or not isinstance(message.get("content"), str):
@@ -69,12 +73,15 @@ def _request(messages, *, schema=None, web=False, model=None):
             return message
         except HTTPError as exc:
             last_error = exc
-            if attempt == 0 and exc.code in {408, 429, 500, 502, 503, 504, 529}:
+            if attempt < attempts - 1 and exc.code in {408, 429, 500, 502, 503, 504, 529}:
+                time.sleep(retry_delays[attempt] if web else 0)
                 continue
             break
         except (URLError, TimeoutError, IndexError, KeyError, TypeError, ValueError) as exc:
             last_error = exc
-            if attempt == 0:
+            if attempt < attempts - 1:
+                if web:
+                    time.sleep(retry_delays[attempt])
                 continue
             break
 

@@ -51,6 +51,8 @@ def item_list(request):
         items = items.filter(~Exists(active), condition=Item.Condition.OK)
     elif availability == "ausgeliehen":
         items = items.filter(Exists(active))
+    elif availability == "ungeprueft":
+        items = items.filter(condition=Item.Condition.UNVERIFIED)
     if request.GET.get("meine"):
         items = items.filter(responsible=request.user)
     items = items.exclude(condition=Item.Condition.RETIRED)

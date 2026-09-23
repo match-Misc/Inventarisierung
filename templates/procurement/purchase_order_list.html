@@ -17,6 +17,8 @@
   </div>
   <div class="col-auto">{{ filter.form.tool_type }}</div>
   <div class="col-auto">{{ filter.form.project }}</div>
+  <div class="col-auto">{{ filter.form.research_status }}</div>
+  <div class="col-auto">{{ filter.form.linked }}</div>
   <div class="col-auto">
     <button type="submit" class="btn btn-primary">Filtern</button>
     <a href="{% url 'procurement:list' %}" class="btn btn-outline-secondary">Zurücksetzen</a>
@@ -28,7 +30,7 @@
     <thead>
       <tr>
         <th>Name</th><th>Firma</th><th>Preis</th><th>Typ</th><th>Kenndaten</th>
-        <th>Kaufdatum</th><th>Projekt</th><th>Datenblatt</th><th>Geprüft</th>
+        <th>Kaufdatum</th><th>Projekt</th><th>Inventar</th><th>Recherche</th><th>Datenblatt</th><th>Geprüft</th>
       </tr>
     </thead>
     <tbody>
@@ -41,6 +43,11 @@
         <td>{{ order.key_specs|default:"–"|linebreaksbr }}</td>
         <td>{{ order.purchase_date|date:"d.m.Y"|default:"–" }}</td>
         <td>{{ order.project|default:"–" }}</td>
+        <td>{% if order.inventory_item %}<a href="{{ order.inventory_item.get_absolute_url }}">{{ order.inventory_item }}</a>{% else %}–{% endif %}</td>
+        <td>
+          {{ order.get_research_status_display }}
+          {% if order.research_source_url %}<br><a class="small" href="{{ order.research_source_url }}" rel="noopener noreferrer" target="_blank">{% if order.research_data.source_kind == "manufacturer" %}Herstellerquelle{% else %}Händlerquelle{% endif %}</a>{% endif %}
+        </td>
         <td>{% if order.datasheet_path %}<span class="text-muted">{{ order.datasheet_path }}</span>{% else %}–{% endif %}</td>
         <td>
           {% if order.manually_verified %}
@@ -51,7 +58,7 @@
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="9" class="text-center text-muted">Keine Bestellungen gefunden.</td></tr>
+      <tr><td colspan="11" class="text-center text-muted">Keine Bestellungen gefunden.</td></tr>
       {% endfor %}
     </tbody>
   </table>
