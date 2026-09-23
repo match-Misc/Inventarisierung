@@ -1,3 +1,0 @@
-{% extends "base.html" %}
-{% block title %}Meine Buchungen{% endblock %}
-{% block content %}<h1>Meine Buchungen</h1><div class="list-group">{% for booking in bookings %}<a class="list-group-item list-group-item-action" href="{% url 'loans:detail' booking.pk %}"><strong>{{ booking.item.name }}</strong> · {{ booking.get_status_display }} · {{ booking.start_date|date:"d.m.Y" }}–{{ booking.end_date|date:"d.m.Y" }}</a>{% empty %}<div class="alert alert-info">Noch keine Buchungen.</div>{% endfor %}</div>{% endblock %}

@@ -1,0 +1,29 @@
+{% load inventory_tags %}{% comment %}
+  Aktionsbuttons für eine Buchung. Erwartet: booking, user, today, next (Rücksprung-URL).
+{% endcomment %}{% if booking.borrower_id == user.pk or booking.item|can_manage:user %}
+<div class="d-flex flex-wrap gap-1">
+  {% if booking.status == "active" %}
+    <a class="btn btn-sm btn-primary" href="{% url 'loans:return' booking.pk %}?next={{ next|urlencode }}"><i class="bi bi-box-arrow-in-left"></i> Zurückgeben</a>
+    {% if not booking.requested_end_date %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'loans:extend' booking.pk %}?next={{ next|urlencode }}">Verlängern</a>{% endif %}
+  {% elif booking.status == "reserved" %}
+    {% if booking.start_date <= today %}
+      <form method="post" action="{% url 'loans:checkout' booking.pk %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <button class="btn btn-sm btn-success"><i class="bi bi-box-arrow-right"></i> Entnehmen</button>
+      </form>
+    {% else %}
+      <span class="small text-body-secondary align-self-center">Entnahme ab {{ booking.start_date|date:"d.m." }}</span>
+    {% endif %}
+    {% if not booking.requested_end_date %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'loans:extend' booking.pk %}?next={{ next|urlencode }}">Verlängern</a>{% endif %}
+    <form method="post" action="{% url 'loans:cancel' booking.pk %}" onsubmit="return confirm('Reservierung wirklich stornieren?')">{% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-sm btn-outline-danger">Stornieren</button>
+    </form>
+  {% elif booking.status == "requested" and booking.borrower_id == user.pk %}
+    <form method="post" action="{% url 'loans:cancel' booking.pk %}" onsubmit="return confirm('Anfrage zurückziehen?')">{% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-sm btn-outline-danger">Zurückziehen</button>
+    </form>
+  {% endif %}
+</div>
+{% endif %}

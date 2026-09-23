@@ -152,18 +152,17 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [x] Modelle und Migrationen (inklusive Startkategorien Sensoren/Aktoren/Werkzeuge/Sonstiges), Django-Admin
    - [x] Bildverarbeitung (`images.py`), Upload-Validatoren, Aufräumen der Dateien beim Löschen (`signals.py`)
    - [ ] Formulare (ItemForm mit Zubehör-Formset, Upload mehrerer Fotos, DocumentForm, LocationForm), Filter (django-filter)
-   - [x] Geräteliste mit Textsuche, Detailseite sowie geschützte Medien-View
-   - [ ] Filter (HTMX), Anlegen, Bearbeiten, Duplizieren (`?vorlage=<id>`), Ausmustern, Fotos/Dokumente hochladen und Orte (HTMX-Modal)
-3. **Ausleihe**
+   - [x] Geräteliste (Suche, Kategorie, Status) unter `/geraete/`, Detailseite mit Ausleihfunktionen und geprüften Kennwerten, geschützte Medien-View
+   - [ ] Views und Templates: Liste mit Suche und Filtern (HTMX), Detailseite ausbauen (Fotos, Dokumente verwalten), Anlegen, Bearbeiten, Duplizieren (`?vorlage=<id>`), Ausmustern, Fotos und Dokumente, Orte (mit HTMX-Modal)
+3. **Ausleihe** (#3, #4)
    - [x] Modelle `Booking` und `ReminderLog`, Context-Processor für das Badge mit offenen Anfragen
-   - [x] `services.py` (alle Übergänge und Konfliktprüfung), `notifications.py` und E-Mail-Templates
-   - [x] Buchungsformular und Aktionen (genehmigen, ablehnen, stornieren, entnehmen, zurückgeben, verlängern)
-   - [ ] Vollständige Buchungsübersicht unter `/`
-4. **Kalender:** [ ] JSON-Feed unter `/kalender/events/` (Enddatum exklusiv, also +1 Tag), Kalenderseite mit Filtern, Gerätekalender mit Zeitraumauswahl
-5. **Konten:** [ ] Profilseite, Passwort vergessen und ändern (Templates)
+   - [x] `services.py` (alle Übergänge und die Konfliktprüfung), `notifications.py` und E-Mail-Templates
+   - [x] Buchungsformular, Aktionen (genehmigen, ablehnen, stornieren, entnehmen, zurückgeben, verlängern), Übersicht unter `/`, Tests
+4. **Kalender** (#5): [ ] JSON-Feed unter `/kalender/events/` (Enddatum exklusiv, also +1 Tag), Kalenderseite mit Filtern, Gerätekalender mit Zeitraumauswahl
+5. **Konten** (#6): [ ] Profilseite, Passwort vergessen und ändern (Templates)
 6. **Erinnerungen:** [ ] `manage.py send_reminders` (Rückgabe morgen fällig, überfällig, Reservierung beginnt heute, Sammelmail zu offenen Anfragen, Verfallen-Logik), abgesichert gegen Doppelversand über `ReminderLog`
 7. **Demo und Betrieb**
-   - [ ] `manage.py seed_demo`
+   - [x] `manage.py seed_demo` (Testnutzer torge, tobias, dasha, karina, robert, Passwort `demo1234`; KUKA KR6, UR16, Schweißgerät, Sony Kamera)
    - [ ] `Dockerfile` und `compose.yaml` (web + postgres)
    - [ ] README-Abschnitt zu Betrieb und Backup
    - [ ] `check --deploy` sauber
@@ -220,7 +219,7 @@ ruff check . && ruff format .              # Lint und Format (vor jedem Commit)
 python manage.py check                     # Django-Systemprüfung
 python manage.py import_floorplan skizze.pptx --name Versuchsfeld   # Hallenplan aus PowerPoint übernehmen
 python manage.py send_reminders            # tägliche Erinnerungen (in Arbeit, Schritt 6)
-python manage.py seed_demo                 # Demo-Daten (in Arbeit, Schritt 7)
+python manage.py seed_demo                 # Testnutzer, Beispielgeräte und -buchungen (nur mit DEBUG=True)
 python manage.py expire_bookings           # verstrichene Anfragen/Reservierungen freigeben
 ```
 

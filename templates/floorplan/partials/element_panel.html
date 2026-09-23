@@ -9,8 +9,7 @@
     <ul class="list-group list-group-flush">
       {% for item in items %}
         <li class="list-group-item px-0">
-          {# Link auf die Detailseite folgt mit Issue #2; bis dahin für Admins in die Verwaltung. #}
-          {% if user.is_staff %}<a href="{% url 'admin:inventory_item_change' item.pk %}">{{ item.name }}</a>{% else %}<span class="fw-semibold">{{ item.name }}</span>{% endif %}
+          <a class="fw-semibold" href="{{ item.get_absolute_url }}">{{ item.name }}</a>
           {% if item.location_id != element.location_id %}<span class="small text-body-secondary">({{ item.location.name }})</span>{% endif %}
           <div class="small">
             {% with booking=item.current_booking %}

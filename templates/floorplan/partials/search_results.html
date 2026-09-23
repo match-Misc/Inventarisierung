@@ -10,7 +10,7 @@
           </button>
         {% else %}
           <div class="list-group-item small">
-            <span class="fw-semibold">{{ result.item.name }}</span><br>
+            <a class="fw-semibold" href="{{ result.item.get_absolute_url }}">{{ result.item.name }}</a><br>
             <span class="text-body-secondary">nicht auf diesem Plan – Ort: {{ result.item.location }}</span>
           </div>
         {% endif %}

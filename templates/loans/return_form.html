@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Rückgabe: {{ booking.item.name }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-7">
+  <h1 class="h3 mb-3">Rückgabe: {{ booking.item.name }}</h1>
+  <div class="card"><div class="card-body">
+    <p>Ausgeliehen von <strong>{{ booking.borrower.display_name }}</strong> seit {{ booking.checked_out_at|date:"d.m.Y"|default:booking.start_date }}.
+      Bitte zurück an den Ablageort: <strong>{{ booking.item.location }}</strong>{% if booking.item.location_note %} ({{ booking.item.location_note }}){% endif %}.</p>
+    {% if accessories %}
+      <p class="mb-1 fw-semibold">Zubehör vollständig?</p>
+      {% for a in accessories %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="acc-{{ a.pk }}">
+          <label class="form-check-label" for="acc-{{ a.pk }}">{{ a }}{% if a.note %} <span class="small text-body-secondary">– {{ a.note }}</span>{% endif %}</label>
+        </div>
+      {% endfor %}
+      <hr>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.GET.next }}">
+      {{ form|crispy }}
+      <button type="submit" class="btn btn-primary">Rückgabe bestätigen</button>
+      <a class="btn btn-outline-secondary" href="{{ booking.item.get_absolute_url }}">Abbrechen</a>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}

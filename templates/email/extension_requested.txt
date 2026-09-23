@@ -1,0 +1,7 @@
+{% autoescape off %}Hallo {{ item.responsible.first_name|default:item.responsible.username }},
+
+{{ booking.borrower.display_name }} möchte die Ausleihe von „{{ item.name }}“ verlängern:
+bisher bis {{ booking.end_date|date:"d.m.Y" }}, neu bis {{ booking.requested_end_date|date:"d.m.Y" }}.
+
+Bitte genehmigen oder ablehnen: {{ dashboard_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}

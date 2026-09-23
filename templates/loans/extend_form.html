@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Verlängern: {{ booking.item.name }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-6">
+  <h1 class="h3 mb-3">Verlängern: {{ booking.item.name }}</h1>
+  <div class="card"><div class="card-body">
+    <p>Bisher gebucht bis <strong>{{ booking.end_date|date:"d.m.Y" }}</strong>.</p>
+    {% if mode == "request" %}
+      <div class="alert alert-warning small">Für dieses Gerät muss <strong>{{ booking.item.responsible.display_name }}</strong> die Verlängerung genehmigen.</div>
+    {% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.GET.next }}">
+      {{ form|crispy }}
+      <button type="submit" class="btn btn-primary">{% if mode == "request" %}Verlängerung anfragen{% else %}Verlängern{% endif %}</button>
+      <a class="btn btn-outline-secondary" href="{{ booking.item.get_absolute_url }}">Abbrechen</a>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}

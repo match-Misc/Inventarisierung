@@ -1,13 +1,153 @@
 {% extends "base.html" %}
+{% load inventory_tags %}
 {% block title %}{{ item.name }}{% endblock %}
 {% block content %}
-<a href="{% url 'dashboard' %}" class="link-secondary">← Zur Geräteliste</a>
-<div class="d-flex justify-content-between align-items-start mt-2 mb-3"><div><h1>{{ item.name }}</h1><p class="text-muted">{{ item.category.path }}{% if item.manufacturer %} · {{ item.manufacturer }}{% endif %}{% if item.model_number %} · {{ item.model_number }}{% endif %}</p></div><a class="btn btn-primary" href="{% url 'loans:create' item.pk %}">Buchen / anfragen</a></div>
-<div class="row g-4"><div class="col-lg-8">
-  {% if item.description %}<section class="card card-body mb-3"><h2 class="h5">Beschreibung</h2><p class="mb-0">{{ item.description|linebreaksbr }}</p></section>{% endif %}
-  <section class="card card-body mb-3"><h2 class="h5">Geprüfte Kennwerte</h2><ul class="mb-0">{% for spec in item.specifications.all %}<li>{{ spec.property_name }}: {{ spec.value_text }}{% if spec.unit %} ({{ spec.unit }}){% endif %} – <a href="{{ spec.source_url }}" rel="noopener noreferrer" target="_blank">{{ spec.get_source_kind_display }}</a></li>{% empty %}<li>Keine geprüften Kennwerte hinterlegt.</li>{% endfor %}</ul></section>
-  {% if item.photos.all %}<section class="card card-body mb-3"><h2 class="h5">Fotos</h2><div class="d-flex flex-wrap gap-2">{% for photo in item.photos.all %}<img class="item-photo" src="{{ photo.thumb_url }}" alt="{{ photo.caption|default:item.name }}">{% endfor %}</div></section>{% endif %}
-  <section class="card card-body mb-3"><h2 class="h5">Dokumente</h2><ul class="mb-0">{% for doc in item.documents.all %}<li><a href="{{ doc.href }}" rel="noopener noreferrer">{{ doc.title }}</a> ({{ doc.get_doc_type_display }})</li>{% empty %}<li>Keine Dokumente hinterlegt.</li>{% endfor %}</ul></section>
-  <section class="card card-body"><h2 class="h5">Zubehör</h2><ul class="mb-0">{% for accessory in item.accessories.all %}<li>{{ accessory }}{% if accessory.note %} – {{ accessory.note }}{% endif %}</li>{% empty %}<li>Kein Zubehör hinterlegt.</li>{% endfor %}</ul></section>
-</div><div class="col-lg-4"><div class="card card-body"><h2 class="h5">Standort und Ausleihe</h2><dl class="mb-0"><dt>Ablageort</dt><dd>{{ item.location.path }}{% if item.location_note %}<br>{{ item.location_note }}{% endif %}</dd><dt>Zustand</dt><dd>{{ item.get_condition_display }}</dd><dt>Verantwortlich</dt><dd>{{ item.responsible.display_name }}</dd><dt>Ausleihregel</dt><dd>{{ item.get_loan_policy_display }}</dd><dt>Aktuell</dt><dd>{% if active_booking %}Ausgeliehen an {{ active_booking.borrower.display_name }} bis {{ active_booking.end_date|date:"d.m.Y" }}{% else %}Nicht ausgeliehen{% endif %}</dd></dl></div></div></div>
+{% with next=request.get_full_path %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'inventory:item_list' %}">Geräte</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'inventory:item_list' %}?kategorie={{ item.category_id }}">{{ item.category }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ item.name }}</li>
+  </ol>
+</nav>
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+  <h1 class="h3 mb-0 me-auto">{{ item.name }} {% policy_icon item %}</h1>
+  {% if user.is_staff %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'admin:inventory_item_change' item.pk %}"><i class="bi bi-pencil"></i> In der Verwaltung bearbeiten</a>{% endif %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    {% if item.description %}
+      <div class="card mb-4"><div class="card-body">{{ item.description|linebreaks|urlize }}</div></div>
+    {% endif %}
+    <div class="card mb-4">
+      <div class="card-header">Stammdaten</div>
+      <table class="table mb-0">
+        <tbody>
+          {% if item.manufacturer %}<tr><th class="w-25">Hersteller</th><td>{{ item.manufacturer }}</td></tr>{% endif %}
+          {% if item.model_number %}<tr><th>Modell / Typ</th><td>{{ item.model_number }}</td></tr>{% endif %}
+          {% if item.serial_number %}<tr><th>Seriennummer</th><td>{{ item.serial_number }}</td></tr>{% endif %}
+          {% if item.inventory_number %}<tr><th>Inventarnummer</th><td>{{ item.inventory_number }}</td></tr>{% endif %}
+          <tr><th>Kategorie</th><td>{{ item.category }}</td></tr>
+          <tr><th>Ablageort</th><td>
+            {{ item.location }}{% if item.location_note %}<div class="small text-body-secondary">{{ item.location_note }}</div>{% endif %}
+            {% if plan_element %}<a class="small" href="{{ plan_element.plan.get_absolute_url }}?geraet={{ item.pk }}"><i class="bi bi-map"></i> Auf dem Hallenplan zeigen</a>{% endif %}
+          </td></tr>
+          <tr><th>Verantwortlich</th><td>
+            {{ item.responsible.display_name }}
+            <div class="small">{% if item.responsible.email %}<a href="mailto:{{ item.responsible.email }}">{{ item.responsible.email }}</a>{% endif %}{% if item.responsible.phone %} · {{ item.responsible.phone }}{% endif %}</div>
+          </td></tr>
+          <tr><th>Ausleihregel</th><td>{{ item.get_loan_policy_display }}</td></tr>
+          <tr><th>Zustand</th><td>{{ item.get_condition_display }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    {% with specs=item.specifications.all %}{% if specs %}
+      <div class="card mb-4">
+        <div class="card-header">Geprüfte Kennwerte</div>
+        <ul class="list-group list-group-flush">
+          {% for spec in specs %}<li class="list-group-item">{{ spec.property_name }}: {{ spec.value_text }}{% if spec.unit %} ({{ spec.unit }}){% endif %}
+            <a class="small" href="{{ spec.source_url }}" rel="noopener noreferrer" target="_blank">{{ spec.get_source_kind_display }}</a></li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}{% endwith %}
+    {% if accessories %}
+      <div class="card mb-4">
+        <div class="card-header">Zubehör</div>
+        <ul class="list-group list-group-flush">
+          {% for a in accessories %}<li class="list-group-item">{{ a }}{% if a.note %} <span class="small text-body-secondary">– {{ a.note }}</span>{% endif %}</li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    {% if documents %}
+      <div class="card mb-4">
+        <div class="card-header">Dokumente</div>
+        <ul class="list-group list-group-flush">
+          {% for d in documents %}<li class="list-group-item"><i class="bi bi-file-earmark-text"></i> <a href="{{ d.href }}" target="_blank" rel="noopener">{{ d.title }}</a> <span class="small text-body-secondary">({{ d.get_doc_type_display }})</span></li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-4 border-{% if current %}warning{% elif item.is_bookable %}success{% else %}secondary{% endif %}">
+      <div class="card-body">
+        <div class="mb-2">{% item_status item detailed=False %}</div>
+        {% if current %}
+          <p class="mb-1">Ausgeliehen an <strong>{{ current.borrower.display_name }}</strong>
+            seit {{ current.checked_out_at|date:"d.m.Y"|default:current.start_date }},
+            {% if current.is_overdue %}<span class="text-danger fw-semibold">Rückgabe war am {{ current.end_date|date:"d.m.Y" }} fällig</span>{% else %}voraussichtlich bis <strong>{{ current.end_date|date:"d.m.Y" }}</strong>{% endif %}.</p>
+          <div class="small text-body-secondary mb-2">
+            {% if current.borrower.email %}<a href="mailto:{{ current.borrower.email }}">{{ current.borrower.email }}</a>{% endif %}{% if current.borrower.phone %} · {{ current.borrower.phone }}{% endif %}
+            {% if current.usage_location %}<br>Einsatzort: {{ current.usage_location }}{% endif %}
+            {% if current.purpose %}<br>Zweck: {{ current.purpose }}{% endif %}
+          </div>
+          {% include "loans/partials/booking_actions.html" with booking=current %}
+        {% elif item.is_bookable %}
+          <p class="mb-0">Das Gerät ist verfügbar und liegt in <strong>{{ item.location }}</strong>.</p>
+        {% else %}
+          <p class="mb-0">Das Gerät kann derzeit nicht ausgeliehen werden.</p>
+        {% endif %}
+
+        {% if item.is_bookable %}
+          <hr>
+          {% if mode == "direct" %}
+            <a class="btn btn-success w-100" href="{% url 'loans:book' item.pk %}"><i class="bi bi-calendar-plus"></i> Ausleihen oder reservieren</a>
+            <div class="small text-body-secondary mt-2">{% if item.loan_policy == "free" %}Frei entnehmbar – keine Genehmigung nötig.{% else %}Du bist verantwortlich und kannst direkt buchen.{% endif %}</div>
+          {% else %}
+            <a class="btn btn-warning w-100" href="{% url 'loans:book' item.pk %}"><i class="bi bi-envelope"></i> Ausleihe anfragen</a>
+            <div class="small text-body-secondary mt-2">Nur mit Genehmigung: {{ item.responsible.display_name }} entscheidet über deine Anfrage.</div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    {% if pending %}
+      <div class="card mb-4 border-warning">
+        <div class="card-header">Offene Anfragen</div>
+        <ul class="list-group list-group-flush">
+          {% for booking in pending %}
+            <li class="list-group-item">
+              <strong>{{ booking.borrower.display_name }}</strong>: {{ booking.start_date|date:"d.m.Y" }} – {{ booking.end_date|date:"d.m.Y" }}
+              {% if booking.request_message %}<div class="small fst-italic">„{{ booking.request_message }}“</div>{% endif %}
+              {% include "loans/partials/decision.html" %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <div class="card mb-4">
+      <div class="card-header">Kommende Buchungen</div>
+      <ul class="list-group list-group-flush">
+        {% for booking in upcoming %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between flex-wrap gap-2">
+              <div>
+                {{ booking.start_date|date:"d.m.Y" }} – {{ booking.end_date|date:"d.m.Y" }} {% booking_badge booking %}
+                <div class="small text-body-secondary">{{ booking.borrower.display_name }}</div>
+              </div>
+              {% include "loans/partials/booking_actions.html" %}
+            </div>
+          </li>
+        {% empty %}
+          <li class="list-group-item small text-body-secondary">Keine Reservierungen oder Anfragen.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if history %}
+      <div class="card">
+        <div class="card-header">Verlauf <span class="small text-body-secondary">(nur für Verantwortliche sichtbar)</span></div>
+        <ul class="list-group list-group-flush small">
+          {% for booking in history %}
+            <li class="list-group-item">{{ booking.start_date|date:"d.m.Y" }} – {{ booking.end_date|date:"d.m.Y" }} · {{ booking.borrower.display_name }} {% booking_badge booking %}
+              {% if booking.return_note %}<div class="fst-italic">„{{ booking.return_note }}“</div>{% endif %}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}
 {% endblock %}
