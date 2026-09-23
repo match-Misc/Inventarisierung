@@ -188,6 +188,12 @@ form.card input:not([type=hidden]):not([type=checkbox]):focus, form.card textare
 }
 .plan-swatch-highlight { border: 3px solid #dc3545; }
 
+.item-detail-photo {
+  max-height: 28rem;
+  object-fit: contain;
+  background: #f3f5f1;
+}
+
 @media (max-width: 1199.98px) {
   .app-navbar .navbar-collapse { padding: .8rem 0 .3rem; }
   .app-nav-links { gap: .15rem; }

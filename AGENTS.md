@@ -168,6 +168,13 @@ Regeln:
 - Importierte Geräte erhalten zunächst den Ort „Noch nicht zugeordnet“, die Ausleihregel „Nur mit Genehmigung“ und den Zustand „Ungeprüft“. Sie sind damit nicht buchbar, bis Stammdaten, Ort, Verantwortlichkeit und Zustand geprüft wurden.
 - Die öffentliche Produktrecherche erhält nur kuratierte technische Produktbezeichnungen ohne Personen-, Raum- oder Projektbezug. Beschreibungen und Kennwerte brauchen eine zitierte HTTPS-Quelle; Kennwerte landen als ungeprüfte `SpecificationProposal` in der bestehenden Prüfliste.
 
+### Kuratierter Roboterbestand
+
+- `python manage.py import_match_robots --responsible tobias [--photo-dir <ordner>]` gleicht die Abschnitte „Roboter“ und „Autonome Mobile Plattformen“ der öffentlichen match-Ausstattungsseite mit vorhandenen Bestellgeräten ab. Je gekaufter Einheit bleibt ein eigenes `Item`; fehlende Modelle werden als ungeprüfte Geräte angelegt.
+- Tobias wird verantwortlich. Bei bereits vorhandenen Einträgen bleibt `created_by` unverändert; bei neuen Einträgen ist Tobias Ersteller.
+- Herstellerunterlagen haben Vorrang vor widersprüchlichen Zahlen der Institutsseite. Strukturierte Modellkennwerte sind bis zur Bestätigung am Typenschild `SpecificationProposal`. Datenblätter und Bildnachweise sind als `ItemDocument` verlinkt. Die Fotos zeigen teils nur die Modellreihe, keine identifizierte Einzelmaschine.
+- Die KR6- und Panda-Bestellungen können mehrere physische Einheiten sein. Seriennummer, genaue Variante, Standort und Betriebszustand sind vor Freigabe zur Ausleihe am Gerät zu prüfen.
+
 ## 5. Projektplan und Stand der Umsetzung
 
 Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im selben PR ab.
@@ -215,6 +222,9 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
 12. **Gestaltung der Nutzerwebsite**
    - [x] Grau-grünes Layout für Navigation, Login, Dashboard, Formulare, Tabellen und Funktionsseiten; responsive Menüstruktur und kontrastreiche Fokusmarkierungen
    - [ ] Originales „match“-Logo als Datei in der Kopfzeile einbinden (Datei steht noch aus)
+13. **Kuratierte match-Roboterliste**
+   - [x] 12 Modellbezeichnungen aus den zwei Abschnitten abgeglichen; 14 mögliche physische Einträge mit Tobias als Verantwortlichem, Quellen, Datenblatt-Links, Bildern und technischen Vorschlägen vorbereitet
+   - [ ] Seriennummern, Modellvarianten, tatsächliche Anzahl, Standort und Zustand vor Ort bestätigen; technische Vorschläge danach freigeben
 
 **Weitere Issues (noch nicht eingeplant):** #10 weitere externe Gerätelisten importieren.
 
@@ -261,6 +271,7 @@ python manage.py check                     # Django-Systemprüfung
 python manage.py import_floorplan skizze.pptx --name Versuchsfeld   # Hallenplan aus PowerPoint übernehmen
 python manage.py sync_bestellungen             # Bestellordner mit der Datenbank abgleichen
 python manage.py import_purchase_devices --responsible admin --research   # eindeutige Geräte übernehmen
+python manage.py import_match_robots --responsible tobias --photo-dir <ordner>   # Roboterbestand kuratieren
 python manage.py send_reminders            # tägliche Erinnerungen (einmal täglich einplanen)
 python manage.py seed_demo                 # Testnutzer, Beispielgeräte und -buchungen (nur mit DEBUG=True)
 python manage.py expire_bookings           # verstrichene Anfragen/Reservierungen freigeben

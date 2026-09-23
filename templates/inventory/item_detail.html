@@ -17,6 +17,20 @@
 
 <div class="row g-4">
   <div class="col-lg-7">
+    {% if photos %}
+      <div class="card mb-4">
+        <div class="card-body">
+          {% for photo in photos %}
+            <figure class="mb-0{% if not forloop.first %} mt-3{% endif %}">
+              <a href="{{ photo.image.url }}" target="_blank" rel="noopener" aria-label="Bild von {{ item.name }} in voller Größe öffnen">
+                <img class="img-fluid rounded w-100 item-detail-photo" src="{{ photo.thumb_url }}" alt="{{ photo.caption|default:item.name }}" loading="lazy">
+              </a>
+              {% if photo.caption %}<figcaption class="small text-body-secondary mt-2">{{ photo.caption }}</figcaption>{% endif %}
+            </figure>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
     {% if item.description %}
       <div class="card mb-4"><div class="card-body">{{ item.description|linebreaks|urlize }}</div></div>
     {% endif %}
