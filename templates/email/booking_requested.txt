@@ -1,0 +1,12 @@
+Hallo {{ item.responsible.first_name|default:item.responsible.username }},
+
+{{ booking.borrower.display_name }} möchte „{{ item }}“ ausleihen:
+
+Zeitraum: {{ booking.start_date|date:"d.m.Y" }} – {{ booking.end_date|date:"d.m.Y" }}
+{% if booking.purpose %}Zweck/Projekt: {{ booking.purpose }}
+{% endif %}{% if booking.usage_location %}Einsatzort: {{ booking.usage_location }}
+{% endif %}{% if booking.request_message %}Nachricht: {{ booking.request_message }}
+{% endif %}
+Bitte im Kalender über die Anfrage entscheiden: {{ site_url }}{% url 'loans:calendar' %}?geraet={{ item.pk }}
+
+{{ site_name }}

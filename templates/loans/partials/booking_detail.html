@@ -1,0 +1,46 @@
+<div class="modal-header">
+  <h5 class="modal-title">{{ booking.item.name }}</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+</div>
+<div class="modal-body">
+  <dl class="row mb-0 small">
+    <dt class="col-4">Status</dt>
+    <dd class="col-8">
+      <span class="badge
+        {% if booking.status == 'active' %}text-bg-primary
+        {% elif booking.status == 'reserved' %}text-bg-success
+        {% elif booking.status == 'requested' %}text-bg-warning
+        {% else %}text-bg-secondary{% endif %}">{{ booking.get_status_display }}</span>
+      {% if booking.is_overdue %}<span class="badge text-bg-danger">Überfällig</span>{% endif %}
+    </dd>
+
+    <dt class="col-4">Ausleiher/in</dt>
+    <dd class="col-8">{{ booking.borrower.display_name }}</dd>
+
+    <dt class="col-4">Zeitraum</dt>
+    <dd class="col-8">{{ booking.start_date|date:"d.m.Y" }} – {{ booking.end_date|date:"d.m.Y" }}</dd>
+
+    {% if booking.purpose %}
+      <dt class="col-4">Zweck / Projekt</dt>
+      <dd class="col-8">{{ booking.purpose }}</dd>
+    {% endif %}
+
+    {% if booking.usage_location %}
+      <dt class="col-4">Einsatzort</dt>
+      <dd class="col-8">{{ booking.usage_location }}</dd>
+    {% endif %}
+
+    {% if can_manage and booking.request_message %}
+      <dt class="col-4">Nachricht</dt>
+      <dd class="col-8">{{ booking.request_message }}</dd>
+    {% endif %}
+
+    {% if can_manage and booking.decision_comment %}
+      <dt class="col-4">Kommentar</dt>
+      <dd class="col-8">{{ booking.decision_comment }}</dd>
+    {% endif %}
+  </dl>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Schließen</button>
+</div>

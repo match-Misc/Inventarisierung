@@ -145,10 +145,11 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [ ] Views und Templates: Liste mit Suche und Filtern (HTMX), Detailseite, Anlegen, Bearbeiten, Duplizieren (`?vorlage=<id>`), Ausmustern, Fotos und Dokumente, Orte (mit HTMX-Modal), geschützte Medien-View
 3. **Ausleihe** (#3, #4)
    - [x] Modelle `Booking` und `ReminderLog`, Context-Processor für das Badge mit offenen Anfragen
-   - [ ] `services.py` (alle Übergänge und die Konfliktprüfung), `notifications.py` und E-Mail-Templates
-   - [ ] Buchungsformular, Aktionen (genehmigen, ablehnen, stornieren, entnehmen, zurückgeben, verlängern), Übersicht unter `/`
-4. **Kalender** (#5): [ ] JSON-Feed unter `/kalender/events/` (Enddatum exklusiv, also +1 Tag), Kalenderseite mit Filtern, Gerätekalender mit Zeitraumauswahl
+   - [x] `services.py`: Buchung anlegen (`create_booking`) mit Konfliktprüfung und Sperre; `notifications.py` + E-Mail-Vorlage für Anfragen. Genehmigen, ablehnen, entnehmen, zurückgeben und verlängern folgen noch.
+   - [x] Buchungsformular im Kalender-Modal (HTMX). Aktionen genehmigen/ablehnen/stornieren/entnehmen/zurückgeben/verlängern sowie die Übersicht unter `/` folgen noch.
+4. **Kalender** (#5): [x] JSON-Feed unter `/kalender/events/` (Enddatum exklusiv, also +1 Tag), Kalenderseite mit Filtern (Gerät, Kategorie, Ort, „nur meine“), Buchen per Klick/Auswahl im Kalender (FullCalendar), Detail-Modal je Buchung
 5. **Konten** (#6): [ ] Profilseite, Passwort vergessen und ändern (Templates)
+
 6. **Erinnerungen:** [ ] `manage.py send_reminders` (Rückgabe morgen fällig, überfällig, Reservierung beginnt heute, Sammelmail zu offenen Anfragen, Verfallen-Logik), abgesichert gegen Doppelversand über `ReminderLog`
 7. **Demo und Betrieb**
    - [ ] `manage.py seed_demo`

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Kalender{% endblock %}
+{% block container %}container-fluid{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0 me-auto"><i class="bi bi-calendar3"></i> Buchungskalender</h1>
+  <button type="button" class="btn btn-primary" id="btn-new-booking"><i class="bi bi-plus-lg"></i> Neue Buchung</button>
+</div>
+
+<div class="alert alert-warning py-2 d-none" id="unavailable-hint"></div>
+
+<div class="row g-3">
+  <div class="col-lg-8 col-xl-9">
+    <div class="card">
+      <div class="card-body">
+        <div id="calendar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-xl-3">
+    <div class="card mb-3">
+      <div class="card-header">Filter</div>
+      <div class="card-body">
+        <form id="calendar-filters" autocomplete="off">
+          <div class="mb-2">
+            <label class="form-label small mb-1" for="filter-geraet">Gerät</label>
+            <select class="form-select form-select-sm" id="filter-geraet" name="geraet">
+              <option value="">Alle Geräte</option>
+              {% if available_items %}
+                <optgroup label="Verfügbar">
+                  {% for item in available_items %}
+                    <option value="{{ item.pk }}" {% if selected_item.pk == item.pk %}selected{% endif %}>{{ item.name }}</option>
+                  {% endfor %}
+                </optgroup>
+              {% endif %}
+              {% if unavailable_items %}
+                <optgroup label="Nicht verfügbar">
+                  {% for item in unavailable_items %}
+                    <option value="{{ item.pk }}" data-reason="{{ item.get_condition_display }}"
+                            {% if selected_item.pk == item.pk %}selected{% endif %}>{{ item.name }} ({{ item.get_condition_display }})</option>
+                  {% endfor %}
+                </optgroup>
+              {% endif %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small mb-1" for="filter-kategorie">Kategorie</label>
+            <select class="form-select form-select-sm" id="filter-kategorie" name="kategorie">
+              <option value="">Alle Kategorien</option>
+              {% for category in categories %}<option value="{{ category.pk }}">{{ category.path }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small mb-1" for="filter-ort">Ort</label>
+            <select class="form-select form-select-sm" id="filter-ort" name="ort">
+              <option value="">Alle Orte</option>
+              {% for location in locations %}<option value="{{ location.pk }}">{{ location.path }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="filter-meine" name="nur_meine" value="1">
+            <label class="form-check-label small" for="filter-meine">Nur meine Buchungen</label>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Legende</div>
+      <ul class="list-unstyled small mb-0 card-body">
+        <li class="mb-1"><span class="cal-swatch" style="background:#0d6efd"></span> Ausgeliehen</li>
+        <li class="mb-1"><span class="cal-swatch" style="background:#20c997"></span> Reserviert</li>
+        <li class="mb-1"><span class="cal-swatch" style="background:#ffc107"></span> Angefragt</li>
+        <li class="mb-2"><span class="cal-swatch" style="background:#dc3545"></span> Überfällig</li>
+        <li>Nicht verfügbare Geräte (Defekt/Reparatur) sind im Gerätefilter gekennzeichnet und können nicht gebucht werden.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="loans-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body text-center text-body-secondary py-5">
+        <div class="spinner-border" role="status"><span class="visually-hidden">Lädt …</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CALENDAR_URLS = {
+    events: "{% url 'loans:calendar_events' %}",
+    bookingCreate: "{% url 'loans:booking_create' %}",
+    bookingDetail: "{% url 'loans:booking_detail' 0 %}",
+  };
+</script>
+<script src="{% static 'vendor/fullcalendar/index.global.min.js' %}"></script>
+<script src="{% static 'vendor/fullcalendar/locales/de.global.min.js' %}"></script>
+<script src="{% static 'js/calendar.js' %}"></script>
+{% endblock %}

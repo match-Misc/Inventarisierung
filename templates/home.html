@@ -5,8 +5,17 @@
 <h1 class="h3 mb-4">Hallo {{ user.first_name|default:user.username }}!</h1>
 <div class="row g-3">
   <div class="col-md-6 col-lg-4">
+    <a class="card h-100 text-decoration-none" href="{% url 'loans:calendar' %}">
+      <div class="card-body">
+        <h2 class="h5"><i class="bi bi-calendar3"></i> Kalender</h2>
+        <p class="text-body-secondary mb-0">Wer hat welches Gerät ausgeliehen – und wann ist es wieder frei?</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6 col-lg-4">
     <a class="card h-100 text-decoration-none" href="{% url 'floorplan:list' %}">
       <div class="card-body">
+
         <h2 class="h5"><i class="bi bi-map"></i> Hallenplan</h2>
         <p class="text-body-secondary mb-0">Wo steht welcher Schrank, welcher Versuchsstand – und welche Geräte liegen dort?</p>
       </div>

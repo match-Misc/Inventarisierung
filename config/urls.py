@@ -10,6 +10,7 @@ admin.site.index_title = "Verwaltung"
 
 urlpatterns = [
     path("", dashboard, name="dashboard"),
+    path("kalender/", include("loans.urls")),
     path("hallenplan/", include("floorplan.urls")),
     path("konto/", include("accounts.urls")),
     path("konto/", include("django.contrib.auth.urls")),

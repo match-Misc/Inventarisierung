@@ -28,8 +28,12 @@
             <a class="nav-link {% if url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Übersicht</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link {% if namespace == 'loans' %}active{% endif %}" href="{% url 'loans:calendar' %}">Kalender</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link {% if namespace == 'floorplan' %}active{% endif %}" href="{% url 'floorplan:list' %}">Hallenplan</a>
           </li>
+
         </ul>
         <ul class="navbar-nav">
           <li class="nav-item dropdown">
