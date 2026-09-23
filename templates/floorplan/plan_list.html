@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Hallenpläne{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">Hallenpläne</h1>
+{% if plans %}
+  <div class="list-group">
+    {% for plan in plans %}
+      <a class="list-group-item list-group-item-action" href="{{ plan.get_absolute_url }}">
+        <i class="bi bi-map"></i> {{ plan.name }}
+        <span class="text-body-secondary small ms-2">{{ plan.width|floatformat:1 }} × {{ plan.height|floatformat:1 }} m</span>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info">
+    Es gibt noch keinen Hallenplan. Admins können eine PowerPoint-Skizze übernehmen:
+    <code>python manage.py import_floorplan &lt;datei.pptx&gt; --name "Versuchsfeld"</code>
+  </div>
+{% endif %}
+{% endblock %}

@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     "accounts",
     "inventory",
     "loans",
+    "assistant_search",
+    "floorplan",
     "procurement",
 ]
 
@@ -132,6 +134,12 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 DEFAULT_LOAN_DAYS = env.int("DEFAULT_LOAN_DAYS", default=7)
 REMINDER_OVERDUE_INTERVAL_DAYS = env.int("REMINDER_OVERDUE_INTERVAL_DAYS", default=2)
 REMINDER_PENDING_REQUEST_DAYS = env.int("REMINDER_PENDING_REQUEST_DAYS", default=2)
+
+# Der Schlüssel bleibt ausschließlich in der Serverumgebung.
+OPENROUTER_API_KEY = env("OPENROUTER_API_KEY", default="")
+ASSISTANT_MODEL = env("ASSISTANT_MODEL", default="openai/gpt-6-luna")
+ASSISTANT_WEB_SEARCH = env.bool("ASSISTANT_WEB_SEARCH", default=True)
+ASSISTANT_REQUESTS_PER_HOUR = env.int("ASSISTANT_REQUESTS_PER_HOUR", default=20)
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"

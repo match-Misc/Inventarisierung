@@ -1,0 +1,11 @@
+{% autoescape off %}Hallo {{ booking.borrower.first_name|default:booking.borrower.username }},
+
+{% if approved %}deine Anfrage für „{{ item.name }}“ wurde von {{ booking.decided_by.display_name }} genehmigt.
+
+{% include "email/_period.txt" %}
+Bitte bestätige die Entnahme im Tool, sobald du das Gerät abholst ({{ dashboard_url }}).{% else %}deine Anfrage für „{{ item.name }}“ wurde von {{ booking.decided_by.display_name }} leider abgelehnt.{% endif %}{% if booking.decision_comment %}
+
+Kommentar: „{{ booking.decision_comment }}“{% endif %}
+
+Zum Gerät: {{ item_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}

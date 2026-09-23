@@ -1,0 +1,41 @@
+:root {
+    --primary: #005ca9;
+    --secondary: #003b6f;
+    --accent: #f39200;
+    --link-fg: #005ca9;
+    --link-selected-fg: #003b6f;
+    --header-bg: #005ca9;
+    --header-link-color: #ffffff;
+    --breadcrumbs-bg: #003b6f;
+    --breadcrumbs-fg: #ffffff;
+    --breadcrumbs-link-fg: #ffffff;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+    font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+}
+
+#branding h1,
+#branding h1 a {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.button.default,
+input[type="submit"].default,
+.submit-row input.default {
+    background: #f39200;
+    border-color: #f39200;
+    color: #1f1f1f;
+}
+
+.button.default:hover,
+input[type="submit"].default:hover,
+.submit-row input.default:hover {
+    background: #d98200;
+    border-color: #d98200;
+}

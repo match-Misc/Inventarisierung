@@ -1,0 +1,29 @@
+<h2 class="h5 mb-1">{{ element }}</h2>
+<div class="small text-body-secondary mb-3">
+  {{ element.get_kind_display }} · {{ element.width|floatformat:2 }} × {{ element.height|floatformat:2 }} m
+  {% if element.location %}<br><i class="bi bi-geo-alt"></i> Ort: {{ element.location }}{% endif %}
+</div>
+{% if element.location %}
+  <h3 class="h6">Geräte hier ({{ items|length }})</h3>
+  {% if items %}
+    <ul class="list-group list-group-flush">
+      {% for item in items %}
+        <li class="list-group-item px-0">
+          <a class="fw-semibold" href="{{ item.get_absolute_url }}">{{ item.name }}</a>
+          {% if item.location_id != element.location_id %}<span class="small text-body-secondary">({{ item.location.name }})</span>{% endif %}
+          <div class="small">
+            {% with booking=item.current_booking %}
+              {% if item.condition != "ok" %}<span class="badge text-bg-secondary">{{ item.get_condition_display }}</span>
+              {% elif booking %}<span class="badge text-bg-warning">ausgeliehen</span> an {{ booking.borrower.short_name }} bis {{ booking.end_date|date:"d.m.Y" }}
+              {% else %}<span class="badge text-bg-success">verfügbar</span>{% endif %}
+            {% endwith %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="small text-body-secondary mb-0">Hier ist noch kein Gerät abgelegt. Als Ablageort „{{ element.location }}“ wählen, dann erscheint es hier.</p>
+  {% endif %}
+{% else %}
+  <p class="small text-body-secondary mb-0">In diesem Objekt können keine Geräte abgelegt werden{% if not element.label %} (keine Beschriftung){% endif %}.</p>
+{% endif %}

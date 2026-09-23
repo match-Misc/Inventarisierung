@@ -1,0 +1,3 @@
+Zeitraum: {{ booking.start_date|date:"d.m.Y" }} bis {{ booking.end_date|date:"d.m.Y" }}{% if booking.purpose %}
+Zweck/Projekt: {{ booking.purpose }}{% endif %}{% if booking.usage_location %}
+Einsatzort: {{ booking.usage_location }}{% endif %}
