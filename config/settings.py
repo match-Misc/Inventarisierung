@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "accounts",
     "inventory",
     "loans",
+    "floorplan",
 ]
 
 MIDDLEWARE = [

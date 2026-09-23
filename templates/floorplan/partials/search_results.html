@@ -1,0 +1,22 @@
+{% if query|length >= 2 %}
+  {% if results %}
+    <div class="list-group">
+      {% for result in results %}
+        {% if result.element %}
+          <button type="button" class="list-group-item list-group-item-action small" data-show-element="{{ result.element.pk }}">
+            <span class="fw-semibold">{{ result.item.name }}</span><br>
+            <i class="bi bi-geo-alt-fill text-danger"></i> {{ result.item.location }}
+            {% if result.item.current_booking %}<br><span class="badge text-bg-warning">ausgeliehen</span> an {{ result.item.current_booking.borrower.short_name }}{% endif %}
+          </button>
+        {% else %}
+          <div class="list-group-item small">
+            <span class="fw-semibold">{{ result.item.name }}</span><br>
+            <span class="text-body-secondary">nicht auf diesem Plan – Ort: {{ result.item.location }}</span>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="small text-body-secondary mb-0">Keine Geräte gefunden.</p>
+  {% endif %}
+{% endif %}

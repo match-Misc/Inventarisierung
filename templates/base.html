@@ -1,0 +1,71 @@
+{% load static %}<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · {{ site_name }}</title>
+  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-body-tertiary" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  {% if user.is_authenticated %}
+  {% with url_name=request.resolver_match.url_name namespace=request.resolver_match.namespace %}
+  <nav class="navbar navbar-expand-lg bg-body border-bottom">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'dashboard' %}">
+        <i class="bi bi-box-seam"></i> {{ site_name }}
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav"
+              aria-controls="main-nav" aria-expanded="false" aria-label="Navigation umschalten">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="main-nav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link {% if url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Übersicht</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if namespace == 'floorplan' %}active{% endif %}" href="{% url 'floorplan:list' %}">Hallenplan</a>
+          </li>
+        </ul>
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-person-circle"></i> {{ user.display_name }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{% url 'password_change' %}">Passwort ändern</a></li>
+              {% if user.is_staff %}<li><a class="dropdown-item" href="{% url 'admin:index' %}">Verwaltung (Admin)</a></li>{% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+                  <button type="submit" class="dropdown-item">Abmelden</button>
+                </form>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  {% endwith %}
+  {% endif %}
+
+  <main class="{% block container %}container{% endblock %} py-4">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Schließen"></button>
+      </div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

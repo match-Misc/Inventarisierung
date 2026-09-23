@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ plan.name }}{% if edit %} bearbeiten{% endif %}{% endblock %}
+{% block container %}container-fluid{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0 me-auto">
+    <i class="bi bi-map"></i> {{ plan.name }}
+    {% if edit %}<span class="badge text-bg-warning align-middle fs-6">Bearbeitungsmodus</span>{% endif %}
+  </h1>
+  <div class="btn-group" role="group" aria-label="Zoom">
+    <button type="button" class="btn btn-outline-secondary" data-zoom="-1" title="Verkleinern"><i class="bi bi-zoom-out"></i></button>
+    <button type="button" class="btn btn-outline-secondary" data-zoom="0" title="Einpassen"><i class="bi bi-aspect-ratio"></i></button>
+    <button type="button" class="btn btn-outline-secondary" data-zoom="1" title="Vergrößern"><i class="bi bi-zoom-in"></i></button>
+  </div>
+  {% if user.is_staff %}
+    {% if edit %}
+      <a class="btn btn-outline-secondary" href="{{ plan.get_absolute_url }}" data-leave-edit>Fertig</a>
+    {% else %}
+      <a class="btn btn-outline-primary" href="{% url 'floorplan:edit' plan.pk %}"><i class="bi bi-pencil"></i> Plan bearbeiten</a>
+    {% endif %}
+  {% endif %}
+</div>
+
+{% if highlight %}
+  <div class="alert alert-info py-2">
+    <i class="bi bi-geo-alt-fill"></i> Gesucht: <strong>{{ highlight }}</strong> ist rot markiert.
+  </div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-8 col-xl-9">
+    <div class="card">
+      <div class="plan-canvas" id="plan-canvas">
+        <svg id="plan-svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hallenplan {{ plan.name }}"></svg>
+      </div>
+    </div>
+    <div class="small text-body-secondary mt-2">
+      Raster: 1 m. {% if edit %}Objekte ziehen zum Verschieben, Ecke unten rechts zum Ändern der Größe.
+      Pfeiltasten verschieben um 10 cm (mit Umschalt um 1 m), Entf löscht.{% else %}Auf ein Objekt klicken, um die Geräte darin zu sehen.{% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-xl-3">
+    {% if edit %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <button type="button" class="btn btn-sm btn-primary" data-action="add"><i class="bi bi-plus-lg"></i> Objekt</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="duplicate" data-needs-selection>Duplizieren</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="front" data-needs-selection title="Nach vorne"><i class="bi bi-front"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="back" data-needs-selection title="Nach hinten"><i class="bi bi-back"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-danger" data-action="delete" data-needs-selection><i class="bi bi-trash"></i></button>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-success" data-action="save"><i class="bi bi-check-lg"></i> Speichern</button>
+            <span class="small" id="plan-status"></span>
+          </div>
+          <div class="alert alert-danger small mt-3 mb-0 d-none" id="plan-error"></div>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-header">Objekt</div>
+        <div class="card-body">
+          <p class="text-body-secondary small mb-0" id="props-empty">Kein Objekt ausgewählt.</p>
+          <form id="props-form" class="d-none" autocomplete="off">
+            <div class="mb-2">
+              <label class="form-label small mb-1" for="prop-label">Beschriftung</label>
+              <textarea class="form-control form-control-sm" id="prop-label" name="label" rows="2"></textarea>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small mb-1" for="prop-kind">Art</label>
+              <select class="form-select form-select-sm" id="prop-kind" name="kind">
+                {% for value, label in plan_data.kinds.items %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+              </select>
+              <div class="form-text" id="prop-location-hint"></div>
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-6"><label class="form-label small mb-1" for="prop-x">x (m)</label>
+                <input type="number" step="0.05" class="form-control form-control-sm" id="prop-x" name="x"></div>
+              <div class="col-6"><label class="form-label small mb-1" for="prop-y">y (m)</label>
+                <input type="number" step="0.05" class="form-control form-control-sm" id="prop-y" name="y"></div>
+              <div class="col-6"><label class="form-label small mb-1" for="prop-width">Breite (m)</label>
+                <input type="number" step="0.05" min="0.05" class="form-control form-control-sm" id="prop-width" name="width"></div>
+              <div class="col-6"><label class="form-label small mb-1" for="prop-height">Tiefe (m)</label>
+                <input type="number" step="0.05" min="0.05" class="form-control form-control-sm" id="prop-height" name="height"></div>
+              <div class="col-6"><label class="form-label small mb-1" for="prop-rotation">Drehung (°)</label>
+                <input type="number" step="15" class="form-control form-control-sm" id="prop-rotation" name="rotation"></div>
+              <div class="col-6"><label class="form-label small mb-1" for="prop-color">Farbe</label>
+                <div class="d-flex align-items-center gap-2">
+                  <input type="color" class="form-control form-control-sm form-control-color" id="prop-color" name="color">
+                  <div class="form-check small mb-0">
+                    <input class="form-check-input" type="checkbox" id="prop-nofill" name="nofill">
+                    <label class="form-check-label" for="prop-nofill">keine</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-header">Hallengröße</div>
+        <div class="card-body row g-2">
+          <div class="col-6"><label class="form-label small mb-1" for="plan-width">Breite (m)</label>
+            <input type="number" step="0.1" min="1" class="form-control form-control-sm" id="plan-width" value="{{ plan.width|stringformat:'s' }}"></div>
+          <div class="col-6"><label class="form-label small mb-1" for="plan-height">Länge (m)</label>
+            <input type="number" step="0.1" min="1" class="form-control form-control-sm" id="plan-height" value="{{ plan.height|stringformat:'s' }}"></div>
+        </div>
+      </div>
+    {% else %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <label for="plan-search" class="form-label">Gerät suchen</label>
+          <input type="search" class="form-control" id="plan-search" name="q" placeholder="Name, Hersteller, Inventarnr. …"
+                 hx-get="{% url 'floorplan:search' plan.pk %}" hx-trigger="input changed delay:300ms, search"
+                 hx-target="#search-results">
+          <div id="search-results" class="mt-2"></div>
+        </div>
+      </div>
+      <div class="card mb-3">
+        <div class="card-body" id="plan-panel">
+          <p class="text-body-secondary small mb-0">Auf ein Objekt im Plan klicken, um Details und die dort abgelegten Geräte zu sehen.</p>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-header">Legende</div>
+      <ul class="list-unstyled small mb-0 card-body" id="plan-legend"></ul>
+    </div>
+  </div>
+</div>
+
+{{ plan_data|json_script:"plan-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.PLAN_URLS = {
+    save: "{% url 'floorplan:save' plan.pk %}",
+    element: "{% url 'floorplan:element' 0 %}",
+  };
+</script>
+<script src="{% static 'js/floorplan.js' %}"></script>
+{% endblock %}
