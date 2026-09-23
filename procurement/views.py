@@ -6,7 +6,7 @@ from .models import PurchaseOrder
 
 def purchase_order_list(request):
     """Tabellarische Übersicht aller Bestellungen mit Suche und Filtern."""
-    orders = PurchaseOrder.objects.all()
+    orders = PurchaseOrder.objects.select_related("inventory_item")
     order_filter = PurchaseOrderFilter(request.GET or None, queryset=orders)
     return render(
         request,

@@ -255,6 +255,7 @@ def test_stranger_gets_403_on_actions(client, approval_item, user, owner):
 
 def test_item_list_filters(client, free_item, user):
     lent = ItemFactory(name="Oszilloskop")
+    unverified = ItemFactory(name="Importgerät", condition=Item.Condition.UNVERIFIED)
     book(lent, user, TODAY, days(1))
     client.force_login(user)
     response = client.get(reverse("inventory:item_list"), {"status": "ausgeliehen"})
@@ -262,3 +263,5 @@ def test_item_list_filters(client, free_item, user):
     assert names == ["Oszilloskop"]
     response = client.get(reverse("inventory:item_list"), {"q": "oszi"})
     assert [item.name for item in response.context["page"]] == ["Oszilloskop"]
+    response = client.get(reverse("inventory:item_list"), {"status": "ungeprueft"})
+    assert [item.name for item in response.context["page"]] == [unverified.name]

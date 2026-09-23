@@ -16,6 +16,12 @@ class PurchaseOrder(models.Model):
         FURNITURE = "furniture", "Möbel"
         OTHER = "other", "Sonstiges"
 
+    class ResearchStatus(models.TextChoices):
+        NOT_STARTED = "not_started", "Nicht recherchiert"
+        RESEARCHED = "researched", "Recherche vorhanden"
+        AMBIGUOUS = "ambiguous", "Typ nicht eindeutig"
+        FAILED = "failed", "Recherche fehlgeschlagen"
+
     name = models.CharField("Bezeichnung", max_length=255)
     company = models.CharField("Firma", max_length=255, blank=True)
     price = models.DecimalField("Preis (€)", max_digits=10, decimal_places=2, null=True, blank=True)
@@ -39,6 +45,26 @@ class PurchaseOrder(models.Model):
     datasheet_path = models.CharField(
         "Datenblatt", max_length=500, blank=True, help_text="Pfad relativ zum Basisordner."
     )
+
+    inventory_item = models.ForeignKey(
+        "inventory.Item",
+        verbose_name="Inventargerät",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="purchase_orders",
+    )
+    research_status = models.CharField(
+        "Recherchestatus",
+        max_length=20,
+        choices=ResearchStatus.choices,
+        default=ResearchStatus.NOT_STARTED,
+    )
+    research_summary = models.TextField("Rechercheergebnis", blank=True)
+    research_source_url = models.URLField("Recherchequelle", max_length=500, blank=True)
+    research_source_title = models.CharField("Quellentitel", max_length=200, blank=True)
+    research_data = models.JSONField("Recherchedaten", default=dict, blank=True)
+    researched_at = models.DateTimeField("Recherchiert am", null=True, blank=True)
 
     manually_verified = models.BooleanField(
         "Manuell geprüft",

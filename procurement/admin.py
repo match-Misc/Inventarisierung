@@ -12,11 +12,26 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
         "tool_type",
         "purchase_date",
         "project",
+        "inventory_item",
+        "research_status",
         "manually_verified",
         "is_missing",
     )
     list_editable = ("manually_verified",)
-    list_filter = ("tool_type", "project", "manually_verified", "is_missing")
+    list_filter = (
+        "tool_type",
+        "project",
+        "research_status",
+        "manually_verified",
+        "is_missing",
+    )
     search_fields = ("name", "company", "project", "source_folder")
     date_hierarchy = "purchase_date"
-    readonly_fields = ("source_folder", "created_at", "last_synced", "is_missing")
+    readonly_fields = (
+        "source_folder",
+        "created_at",
+        "last_synced",
+        "is_missing",
+        "research_data",
+        "researched_at",
+    )

@@ -95,6 +95,7 @@ class Item(models.Model):
         APPROVAL = "approval", "Nur mit Genehmigung"
 
     class Condition(models.TextChoices):
+        UNVERIFIED = "unverified", "Ungeprüft"
         OK = "ok", "Einsatzbereit"
         DEFECT = "defect", "Defekt"
         REPAIR = "repair", "In Reparatur / Kalibrierung"

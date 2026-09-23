@@ -74,7 +74,7 @@ tests/       pytest-Tests (conftest.py, factories.py)
   - `location` und `location_note` (Ablagehinweis)
   - `responsible`
   - `loan_policy`: `free` oder `approval`
-  - `condition`: `ok`, `defect`, `repair` oder `retired`
+  - `condition`: `unverified`, `ok`, `defect`, `repair` oder `retired`; ungeprüfte Importgeräte sind nicht buchbar
 - **Verfügbarkeit** wird *nicht gespeichert*, sondern aus den Buchungen berechnet (`Item.current_booking`, `Item.objects.with_status()`).
 - **Category/Location:** Baumstruktur über `parent`, der volle Pfad liegt denormalisiert in `path`, z. B. „Geb. A › Raum 1“. Mit `subtree_q()` filtert man inklusive aller Untereinträge.
 - **Fotos** werden beim Upload EXIF-korrigiert, auf höchstens 2560 px verkleinert und als JPEG gespeichert, dazu entsteht ein Vorschaubild (`inventory/images.py`).
@@ -163,6 +163,9 @@ Regeln:
 - `PurchaseOrder` bildet die Einträge aus `01_Bestellungen` getrennt vom buchbaren Inventar ab.
 - `python manage.py sync_bestellungen` liest die Jahres- und Bestellordner ein. Manuell geprüfte Einträge werden dabei nicht überschrieben; fehlende Ordner werden markiert.
 - Der Quellordner wird nur relativ gespeichert. Die Übersicht unter `/bestellungen/` ist wie die übrige Anwendung loginpflichtig.
+- Eindeutige Einzelgeräte werden mit `python manage.py import_purchase_devices --responsible <kennung> [--research]` idempotent ins Inventar übernommen und über `PurchaseOrder.inventory_item` mit allen Bestelldaten verknüpft. Sammelbestellungen, Material, Software, Dienstleistungen und unklare Einträge bleiben unverknüpft.
+- Importierte Geräte erhalten zunächst den Ort „Noch nicht zugeordnet“, die Ausleihregel „Nur mit Genehmigung“ und den Zustand „Ungeprüft“. Sie sind damit nicht buchbar, bis Stammdaten, Ort, Verantwortlichkeit und Zustand geprüft wurden.
+- Die öffentliche Produktrecherche erhält nur kuratierte technische Produktbezeichnungen ohne Personen-, Raum- oder Projektbezug. Beschreibungen und Kennwerte brauchen eine zitierte HTTPS-Quelle; Kennwerte landen als ungeprüfte `SpecificationProposal` in der bestehenden Prüfliste.
 
 ## 5. Projektplan und Stand der Umsetzung
 
@@ -206,11 +209,13 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [x] Foto-/Namenseingabe, Schwierigkeitsstufen, quellengebundene Typrecherche, bearbeitbarer Vorschlag und bestätigtes Anlegen
 11. **Bestellungen-Datenbank**
    - [x] Modell, 367 importierte Bestellungen, Filteransicht, Admin und monatlicher Ordner-Sync
+   - [x] 167 eindeutige Bestellungen mit Inventargeräten verknüpft (164 neu, 3 vorhanden), Bestelldaten auf der Gerätedetailseite
+   - [x] Quellengebundene Produktrecherche: 34 genaue Typen recherchiert, 133 mangels eindeutiger Typvariante als ungeprüft markiert
 12. **Gestaltung der Nutzerwebsite**
    - [x] Grau-grünes Layout für Navigation, Login, Dashboard, Formulare, Tabellen und Funktionsseiten; responsive Menüstruktur und kontrastreiche Fokusmarkierungen
    - [ ] Originales „match“-Logo als Datei in der Kopfzeile einbinden (Datei steht noch aus)
 
-**Weitere Issues (noch nicht eingeplant):** #10 Geräteliste importieren; Verknüpfung von Bestellungen mit physischen Inventargegenständen.
+**Weitere Issues (noch nicht eingeplant):** #10 weitere externe Gerätelisten importieren.
 
 **Später:** LDAP-Anbindung, QR-Etiketten, Änderungshistorie, Aufbewahrungsfrist für die Ausleihhistorie.
 
@@ -254,6 +259,7 @@ ruff check . && ruff format .              # Lint und Format (vor jedem Commit)
 python manage.py check                     # Django-Systemprüfung
 python manage.py import_floorplan skizze.pptx --name Versuchsfeld   # Hallenplan aus PowerPoint übernehmen
 python manage.py sync_bestellungen             # Bestellordner mit der Datenbank abgleichen
+python manage.py import_purchase_devices --responsible admin --research   # eindeutige Geräte übernehmen
 python manage.py send_reminders            # tägliche Erinnerungen (einmal täglich einplanen)
 python manage.py seed_demo                 # Testnutzer, Beispielgeräte und -buchungen (nur mit DEBUG=True)
 python manage.py expire_bookings           # verstrichene Anfragen/Reservierungen freigeben

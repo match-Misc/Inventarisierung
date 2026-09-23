@@ -29,6 +29,7 @@
         <option value="">Alle</option>
         <option value="verfuegbar" {% if request.GET.status == "verfuegbar" %}selected{% endif %}>Verfügbar</option>
         <option value="ausgeliehen" {% if request.GET.status == "ausgeliehen" %}selected{% endif %}>Ausgeliehen</option>
+        <option value="ungeprueft" {% if request.GET.status == "ungeprueft" %}selected{% endif %}>Ungeprüft</option>
       </select>
     </div>
     <div class="col-md-2 d-flex gap-2">
