@@ -125,8 +125,8 @@ def create_booking(
     )
     if status == Status.REQUESTED:
         _notify(notifications.request_created, booking)
-    elif borrower.pk != user.pk:
-        _notify(notifications.booking_created_for_borrower, booking)
+    else:
+        _notify(notifications.booking_created, booking)
     return booking
 
 
@@ -281,8 +281,15 @@ def reject_extension(booking, user, comment=""):
 
 
 def expire_stale(today=None):
-    """Verstrichene Anfragen und nicht abgeholte Reservierungen auf „verfallen“ setzen."""
+    """Verstrichene Anfragen und nicht abgeholte Reservierungen auf „verfallen“ setzen und Bescheid geben."""
     today = today or timezone.localdate()
-    return Booking.objects.filter(status__in=[Status.REQUESTED, Status.RESERVED], end_date__lt=today).update(
-        status=Status.EXPIRED, updated_at=timezone.now()
-    )
+    stale = Booking.objects.filter(
+        status__in=[Status.REQUESTED, Status.RESERVED], end_date__lt=today
+    ).select_related("item", "borrower")
+    count = 0
+    for booking in stale:
+        booking.status = Status.EXPIRED
+        booking.save(update_fields=["status", "updated_at"])
+        notifications.booking_expired(booking)
+        count += 1
+    return count

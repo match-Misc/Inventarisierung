@@ -1,4 +1,4 @@
 
 -- 
-{{ site_name }}
-{{ site_url }}
+{{ site_name }} · {{ site_url }}
+Welche E-Mails du bekommst, stellst du hier ein: {{ settings_url }}

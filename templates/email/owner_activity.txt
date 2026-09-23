@@ -1,0 +1,8 @@
+{% autoescape off %}Hallo {{ recipient.first_name|default:recipient.username }},
+
+dein Gerät „{{ item.name }}“ wurde gebucht ({{ booking.get_status_display }}):
+{{ booking.borrower.display_name }}{% if booking.created_by and booking.created_by != booking.borrower %} (eingetragen von {{ booking.created_by.display_name }}){% endif %}
+
+{% include "email/_period.txt" %}
+Zum Gerät: {{ item_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Mein Konto{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8">
+  <h1 class="h3 mb-3">Mein Konto</h1>
+  {% include "accounts/_nav.html" with active="profile" %}
+  <div class="card"><div class="card-body">
+    <p class="small text-body-secondary">Kennung: <strong>{{ user.username }}</strong>. E-Mail und Telefon sehen andere, wenn du ein Gerät ausgeliehen hast oder dafür verantwortlich bist.</p>
+    <form method="post">{% csrf_token %}
+      {{ form|crispy }}
+      <button class="btn btn-primary">Speichern</button>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}

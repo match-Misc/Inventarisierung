@@ -1,0 +1,9 @@
+{% autoescape off %}Hallo {{ recipient.first_name|default:recipient.username }},
+
+deine Reservierung für „{{ item.name }}“ beginnt {{ when }}.
+
+{% include "email/_period.txt" %}Abholen: {{ item.location }}{% if item.location_note %} ({{ item.location_note }}){% endif %}
+
+Bitte bestätige die Entnahme im Tool, wenn du das Gerät holst: {{ dashboard_url }}
+Du brauchst es doch nicht? Dann storniere bitte, damit andere es nutzen können.
+{% include "email/_footer.txt" %}{% endautoescape %}
