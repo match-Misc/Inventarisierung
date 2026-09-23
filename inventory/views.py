@@ -1,18 +1,31 @@
+import json
 import mimetypes
+import time
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Exists, OuterRef, Q
-from django.http import FileResponse, Http404
-from django.shortcuts import get_object_or_404, render
+from django.http import FileResponse, Http404, HttpResponseNotAllowed, JsonResponse, StreamingHttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.utils import timezone
 
+from assistant_search.provider import ProviderUnavailable
 from floorplan.models import element_for_location
 from loans.models import Booking
 from loans.services import booking_mode
 
-from .models import Category, Item
+from .drafts import DRAFT_LIFETIME, clear_old_drafts, create_draft, delete_draft, draft_photo
+from .forms import IdentifiedItemForm, RecognitionInputForm
+from .images import add_photo
+from .models import Category, Item, ItemDocument
+from .recognition import prepare_photo, recognize_item, research_item
 
 Status = Booking.Status
 
@@ -86,10 +99,211 @@ def serve_media(request, path):
     """Hochgeladene Dateien nur für angemeldete Nutzer (LoginRequiredMiddleware)."""
     root = Path(settings.MEDIA_ROOT).resolve()
     target = (root / path).resolve()
-    if not target.is_relative_to(root) or not target.is_file():
+    if not target.is_relative_to(root) or ".recognition-drafts" in target.parts or not target.is_file():
         raise Http404
     content_type, encoding = mimetypes.guess_type(target.name)
     inline = content_type in INLINE_TYPES and encoding is None
     response = FileResponse(target.open("rb"), as_attachment=not inline, filename=target.name)
     response["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+def _draft_from_session(request):
+    draft = request.session.get("item_recognition_draft")
+    if not isinstance(draft, dict) or time.time() - draft.get("created", 0) > DRAFT_LIFETIME:
+        request.session.pop("item_recognition_draft", None)
+        return None
+    return draft
+
+
+def _category_initial(label):
+    from .models import Category
+
+    label = label.strip().casefold()
+    if not label:
+        return None
+    for category in Category.objects.all():
+        if category.name.casefold() == label or category.path.casefold() == label:
+            return category.pk
+    return None
+
+
+def _allow_ai_call(user_id):
+    cache_key = f"assistant-hourly-{user_id}"
+    count = 1 if cache.add(cache_key, 1, timeout=3600) else cache.incr(cache_key)
+    return count <= settings.ASSISTANT_REQUESTS_PER_HOUR
+
+
+def _identify_steps(user_id, name_hint, photo_bytes, difficulty):
+    """Meldet die jeweils laufende Arbeit und liefert zuletzt den Vorschlag."""
+    proposal = {"name": name_hint}
+    source = None
+    notice = None
+    if not settings.OPENROUTER_API_KEY:
+        notice = ("info", "Kein KI-Schlüssel eingerichtet. Bitte Angaben selbst ausfüllen.")
+    elif not _allow_ai_call(user_id):
+        notice = ("warning", "Das persönliche KI-Stundenlimit ist erreicht. Bitte Angaben selbst ausfüllen.")
+    else:
+        yield "stage", "Gerät und Typenschild werden erkannt."
+        try:
+            proposal = recognize_item(name_hint, photo_bytes, difficulty=difficulty)
+        except ProviderUnavailable:
+            notice = (
+                "warning",
+                "Die KI-Erkennung ist gerade nicht verfügbar. Bitte Angaben selbst ausfüllen.",
+            )
+        if (
+            difficulty != "easy"
+            and proposal.get("manufacturer")
+            and proposal.get("model_number")
+            and _allow_ai_call(user_id)
+        ):
+            yield "stage", "Öffentliche Informationen zu Hersteller und Modell werden geprüft."
+            try:
+                source = research_item(
+                    proposal["manufacturer"], proposal["model_number"], difficulty=difficulty
+                )
+                if source:
+                    source["manufacturer"] = proposal["manufacturer"]
+                    source["model_number"] = proposal["model_number"]
+                    proposal["description"] = source["summary"]
+            except ProviderUnavailable:
+                notice = ("info", "Die Webrecherche ist gerade nicht verfügbar. Bitte Typdaten prüfen.")
+    yield "stage", "Der bearbeitbare Vorschlag wird vorbereitet."
+    yield "result", (proposal, source, notice)
+
+
+def _review_context(request, token, photo_bytes, proposal, source, notice):
+    initial = {key: proposal.get(key, "") for key in IdentifiedItemForm.Meta.fields}
+    initial["category"] = _category_initial(proposal.get("category", ""))
+    initial["loan_policy"] = Item.LoanPolicy.FREE
+    initial["condition"] = Item.Condition.OK
+    request.session["item_recognition_uncertainty"] = proposal.get("uncertainty", "")[:500]
+    request.session["item_recognition_source"] = source
+    return {
+        "form": IdentifiedItemForm(initial=initial),
+        "draft": token,
+        "has_photo": bool(photo_bytes),
+        "uncertainty": request.session["item_recognition_uncertainty"],
+        "source": source,
+        "notice_level": notice[0] if notice else "",
+        "notice_text": notice[1] if notice else "",
+    }
+
+
+@login_required
+def identify_item(request):
+    if request.method not in {"GET", "POST"}:
+        return HttpResponseNotAllowed(["GET", "POST"])
+    if request.method == "GET":
+        clear_old_drafts()
+        return render(
+            request,
+            "inventory/identify.html",
+            {"form": RecognitionInputForm(), "max_photo_mb": settings.MAX_PHOTO_UPLOAD_MB},
+        )
+    form = RecognitionInputForm(request.POST, request.FILES)
+    if not form.is_valid():
+        if request.headers.get("X-Recognition-Stream") == "1":
+            return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+        return render(
+            request,
+            "inventory/identify.html",
+            {"form": form, "max_photo_mb": settings.MAX_PHOTO_UPLOAD_MB},
+        )
+    old = _draft_from_session(request)
+    if old:
+        delete_draft(old["token"])
+    name_hint = form.cleaned_data["name_hint"].strip()
+    photo = form.cleaned_data["photo"]
+    difficulty = form.cleaned_data["difficulty"]
+    photo_bytes = prepare_photo(photo) if photo else None
+    token = create_draft(photo_bytes)
+    request.session["item_recognition_draft"] = {"token": token, "created": time.time()}
+    steps = _identify_steps(request.user.pk, name_hint, photo_bytes, difficulty)
+    if request.headers.get("X-Recognition-Stream") == "1":
+
+        def stream():
+            for kind, value in steps:
+                if kind == "stage":
+                    yield json.dumps({"type": "stage", "text": value}, ensure_ascii=False) + "\n"
+                else:
+                    context = _review_context(request, token, photo_bytes, *value)
+                    request.session.save()
+                    html = render_to_string("inventory/identify_review.html", context, request=request)
+                    yield json.dumps({"type": "result", "html": html}, ensure_ascii=False) + "\n"
+
+        response = StreamingHttpResponse(stream(), content_type="application/x-ndjson; charset=utf-8")
+        response["Cache-Control"] = "no-store"
+        response["X-Accel-Buffering"] = "no"
+        return response
+
+    context = None
+    for kind, value in steps:
+        if kind == "result":
+            context = _review_context(request, token, photo_bytes, *value)
+    return render(request, "inventory/identify_review.html", context)
+
+
+@login_required
+def identified_photo(request, token):
+    draft = _draft_from_session(request)
+    if not draft or draft["token"] != token:
+        raise Http404
+    path = draft_photo(token)
+    if not path:
+        raise Http404
+    response = FileResponse(path.open("rb"), content_type="image/jpeg")
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
+@login_required
+def save_identified_item(request):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    draft = _draft_from_session(request)
+    if not draft or request.POST.get("draft") != draft["token"]:
+        messages.error(request, "Der Entwurf ist abgelaufen. Bitte erneut beginnen.")
+        return redirect("inventory:identify")
+    form = IdentifiedItemForm(request.POST)
+    path = draft_photo(draft["token"])
+    if form.is_valid():
+        with transaction.atomic():
+            item = form.save(commit=False)
+            item.responsible = request.user
+            item.created_by = request.user
+            item.full_clean()
+            item.save()
+            source = request.session.get("item_recognition_source")
+            if (
+                source
+                and item.manufacturer == source.get("manufacturer")
+                and item.model_number == source.get("model_number")
+            ):
+                ItemDocument.objects.create(
+                    item=item,
+                    title="Quelle zur Geräteerkennung",
+                    doc_type=ItemDocument.DocType.OTHER,
+                    url=source["source_url"],
+                    uploaded_by=request.user,
+                )
+            if path:
+                add_photo(item, ContentFile(path.read_bytes(), name="erkennung.jpg"), request.user)
+        delete_draft(draft["token"])
+        request.session.pop("item_recognition_draft", None)
+        request.session.pop("item_recognition_uncertainty", None)
+        request.session.pop("item_recognition_source", None)
+        messages.success(request, "Gerät wurde ins Inventar aufgenommen.")
+        return redirect(item)
+    return render(
+        request,
+        "inventory/identify_review.html",
+        {
+            "form": form,
+            "draft": draft["token"],
+            "has_photo": bool(path),
+            "uncertainty": request.session.get("item_recognition_uncertainty", ""),
+            "source": request.session.get("item_recognition_source"),
+        },
+    )

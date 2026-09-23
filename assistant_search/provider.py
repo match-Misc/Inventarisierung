@@ -16,11 +16,11 @@ class ProviderUnavailable(Exception):
     pass
 
 
-def _request(messages, *, schema=None, web=False):
+def _request(messages, *, schema=None, web=False, model=None):
     if not settings.OPENROUTER_API_KEY:
         raise ProviderUnavailable("Kein KI-Schlüssel konfiguriert.")
     payload = {
-        "model": settings.ASSISTANT_MODEL,
+        "model": model or settings.ASSISTANT_MODEL,
         "messages": messages,
         "max_tokens": 550,
         "provider": {
