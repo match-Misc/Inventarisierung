@@ -23,7 +23,6 @@ def _request(messages, *, schema=None, web=False):
         "model": settings.ASSISTANT_MODEL,
         "messages": messages,
         "max_tokens": 550,
-        "temperature": 0,
         "provider": {
             "zdr": True,
             "data_collection": "deny",
