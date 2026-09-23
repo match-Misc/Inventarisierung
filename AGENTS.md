@@ -179,7 +179,7 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [x] Modelle `Booking` und `ReminderLog`, Context-Processor für das Badge mit offenen Anfragen
    - [x] `services.py` (alle Übergänge und die Konfliktprüfung), `notifications.py` und E-Mail-Templates
    - [x] Buchungsformular, Aktionen (genehmigen, ablehnen, stornieren, entnehmen, zurückgeben, verlängern), Übersicht unter `/`, Tests
-4. **Kalender** (#5): [ ] JSON-Feed unter `/kalender/events/` (Enddatum exklusiv, also +1 Tag), Kalenderseite mit Filtern, Gerätekalender mit Zeitraumauswahl
+4. **Kalender** (#5): [x] Seite `/kalender/` mit Filtern (Gerät, Kategorie, Ort, „nur meine“), JSON-Feed `/kalender/events/` (Enddatum exklusiv, also +1 Tag), Buchen per Auswahl im Kalender (HTMX-Modal, bucht über `loans.services.create_booking`), Detail-Modal je Buchung
 5. **Konten** (#6): [ ] Profilseite, Passwort vergessen und ändern (Templates)
 6. **Benachrichtigungen und Erinnerungen:** [x] Einstellungen je Person, Sofort-Mails, täglicher Lauf `send_reminders` mit `ReminderLog`, Tests. [ ] Auf dem Server täglich einplanen (Schritt 7)
 7. **Demo und Betrieb**

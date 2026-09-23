@@ -1,0 +1,18 @@
+{% load crispy_forms_tags %}
+<div class="modal-header">
+  <h5 class="modal-title"><i class="bi bi-calendar-plus"></i> Neue Buchung</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+</div>
+<form hx-post="{% url 'loans:booking_create' %}" hx-target="#loans-modal .modal-content" hx-swap="innerHTML">
+  <div class="modal-body">
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger small">{{ form.non_field_errors|join:" " }}</div>
+    {% endif %}
+    {{ form|crispy }}
+    <div class="alert alert-warning small d-none" id="item-availability-hint"></div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Abbrechen</button>
+    <button type="submit" class="btn btn-primary">Buchen</button>
+  </div>
+</form>

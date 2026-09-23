@@ -10,7 +10,15 @@ form.card input:not([type=hidden]):not([type=checkbox]), form.card textarea, for
 
 /* Eigene Ergänzungen zu Bootstrap */
 
+/* ---------- Kalender ---------- */
+#calendar { min-height: 60vh; }
+.cal-swatch {
+  display: inline-block; width: 1rem; height: 1rem; margin-right: .4rem;
+  vertical-align: middle; border-radius: 2px;
+}
+
 /* ---------- Hallenplan ---------- */
+
 .plan-canvas {
   overflow: auto;
   height: calc(100vh - 13rem);

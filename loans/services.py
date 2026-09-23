@@ -44,6 +44,14 @@ def conflicting_bookings(item, start, end, *, exclude=None, today=None):
     return qs
 
 
+def effective_end_date(booking, today=None):
+    """Tatsächliches Ende eines belegten Zeitraums: Eine überfällige Ausleihe belegt bis heute."""
+    today = today or timezone.localdate()
+    if booking.status == Status.ACTIVE and booking.end_date < today:
+        return today
+    return booking.end_date
+
+
 def _ensure_free(item, start, end, *, exclude=None, today=None):
     conflict = conflicting_bookings(item, start, end, exclude=exclude, today=today).first()
     if conflict:

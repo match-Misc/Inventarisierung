@@ -12,7 +12,7 @@ admin.site.index_title = "Verwaltung"
 urlpatterns = [
     path("", dashboard, name="dashboard"),
     path("geraete/", include("inventory.urls")),
-    path("ausleihen/", include("loans.urls")),
+    path("", include("loans.urls")),
     path("hallenplan/", include("floorplan.urls")),
     path("assistent/", include("assistant_search.urls")),
     path("medien/<path:path>", serve_media, name="serve_media"),

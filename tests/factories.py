@@ -1,7 +1,11 @@
+from datetime import timedelta
+
 import factory
+from django.utils import timezone
 
 from accounts.models import User
 from inventory.models import Category, Item, Location
+from loans.models import Booking
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -37,3 +41,14 @@ class ItemFactory(factory.django.DjangoModelFactory):
     category = factory.SubFactory(CategoryFactory)
     location = factory.SubFactory(LocationFactory)
     responsible = factory.SubFactory(UserFactory)
+
+
+class BookingFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Booking
+
+    item = factory.SubFactory(ItemFactory)
+    borrower = factory.SubFactory(UserFactory)
+    status = Booking.Status.RESERVED
+    start_date = factory.LazyFunction(timezone.localdate)
+    end_date = factory.LazyAttribute(lambda o: o.start_date + timedelta(days=3))
