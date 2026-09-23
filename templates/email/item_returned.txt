@@ -1,0 +1,8 @@
+{% autoescape off %}Hallo {{ item.responsible.first_name|default:item.responsible.username }},
+
+„{{ item.name }}“ wurde zurückgegeben (ausgeliehen von {{ booking.borrower.display_name }}, Rückgabe gebucht von {{ booking.returned_by.display_name }}).{% if booking.return_note %}
+
+Hinweis zur Rückgabe: „{{ booking.return_note }}“{% endif %}
+
+Zum Gerät: {{ item_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}

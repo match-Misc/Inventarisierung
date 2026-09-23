@@ -1,0 +1,7 @@
+{% autoescape off %}Hallo {{ booking.borrower.first_name|default:booking.borrower.username }},
+
+{{ booking.created_by.display_name }} hat für dich eine Buchung für „{{ item.name }}“ eingetragen ({{ booking.get_status_display }}).
+
+{% include "email/_period.txt" %}
+Zum Gerät: {{ item_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}

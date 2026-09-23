@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags inventory_tags %}
+{% block title %}{% if mode == "request" %}Ausleihe anfragen{% else %}Ausleihen{% endif %}: {{ item.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+  <li class="breadcrumb-item"><a href="{% url 'inventory:item_list' %}">Geräte</a></li>
+  <li class="breadcrumb-item"><a href="{{ item.get_absolute_url }}">{{ item.name }}</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{% if mode == "request" %}Anfragen{% else %}Buchen{% endif %}</li>
+</ol></nav>
+<h1 class="h3 mb-3">{% if mode == "request" %}Ausleihe anfragen{% else %}Ausleihen oder reservieren{% endif %}: {{ item.name }}</h1>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    {% if mode == "request" %}
+      <div class="alert alert-warning"><i class="bi bi-lock-fill"></i> Dieses Gerät gibt es <strong>nur mit Genehmigung</strong>.
+        Deine Anfrage geht an <strong>{{ item.responsible.display_name }}</strong>; du bekommst eine E-Mail, sobald entschieden ist.</div>
+    {% else %}
+      <div class="alert alert-success"><i class="bi bi-unlock"></i> Beginnt die Buchung <strong>heute</strong>, ist das Gerät sofort an dich ausgeliehen.
+        Liegt der Start in der Zukunft, wird es für dich <strong>reserviert</strong> – am Starttag bestätigst du dann die Entnahme.</div>
+    {% endif %}
+    <div class="card"><div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form|crispy }}
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn {% if mode == 'request' %}btn-warning{% else %}btn-success{% endif %}" id="submit-booking"
+                  data-mode="{{ mode }}" data-today="{{ today|date:'Y-m-d' }}">
+            {% if mode == "request" %}Anfrage senden{% else %}Jetzt ausleihen{% endif %}
+          </button>
+          <a class="btn btn-outline-secondary" href="{{ item.get_absolute_url }}">Abbrechen</a>
+        </div>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">Belegung</div>
+      <ul class="list-group list-group-flush">
+        {% for booking in upcoming %}
+          <li class="list-group-item small">
+            {{ booking.start_date|date:"d.m.Y" }} – {{ booking.end_date|date:"d.m.Y" }} {% booking_badge booking %}
+            <div class="text-body-secondary">{{ booking.borrower.display_name }}</div>
+          </li>
+        {% empty %}
+          <li class="list-group-item small text-body-secondary">Keine Buchungen – das Gerät ist frei.</li>
+        {% endfor %}
+      </ul>
+      <div class="card-footer small text-body-secondary">Angefragte Zeiträume blockieren noch nicht; reservierte und ausgeliehene schon.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  // Button-Text je nach Startdatum: heute = ausleihen, später = reservieren
+  (() => {
+    const button = document.getElementById("submit-booking");
+    const start = document.getElementById("id_start_date");
+    if (!button || !start || button.dataset.mode !== "direct") return;
+    const update = () => {
+      button.textContent = start.value && start.value > button.dataset.today ? "Reservieren" : "Jetzt ausleihen";
+    };
+    start.addEventListener("input", update);
+    update();
+  })();
+</script>
+{% endblock %}

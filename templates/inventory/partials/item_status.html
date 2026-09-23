@@ -1,0 +1,4 @@
+{% if state == "condition" %}<span class="badge text-bg-secondary">{{ item.get_condition_display }}</span>
+{% elif state == "overdue" %}<span class="badge text-bg-danger"><i class="bi bi-exclamation-triangle"></i> überfällig</span>{% if detailed %} <span class="small">bei {{ booking.borrower.short_name }} (seit {{ booking.end_date|date:"d.m." }})</span>{% endif %}
+{% elif state == "lent" %}<span class="badge text-bg-warning">ausgeliehen</span>{% if detailed %} <span class="small">an {{ booking.borrower.short_name }} bis {{ booking.end_date|date:"d.m.Y" }}</span>{% endif %}
+{% else %}<span class="badge text-bg-success">verfügbar</span>{% endif %}

@@ -2,7 +2,7 @@
 {% block title %}Gerät hinzufügen{% endblock %}
 {% block content %}
 <div class="row justify-content-center"><div class="col-lg-7">
-  <a href="{% url 'dashboard' %}" class="link-secondary">← Zur Geräteliste</a>
+  <a href="{% url 'inventory:item_list' %}" class="link-secondary">← Zur Geräteliste</a>
   <h1 class="mt-2">Gerät hinzufügen</h1>
   <p>Fotografiere das Gerät oder sein Typenschild. Du kannst auch nur einen Namen eingeben.</p>
   <form method="post" enctype="multipart/form-data" class="card card-body gap-3">

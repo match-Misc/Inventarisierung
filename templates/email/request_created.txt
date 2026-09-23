@@ -1,0 +1,10 @@
+{% autoescape off %}Hallo {{ item.responsible.first_name|default:item.responsible.username }},
+
+{{ booking.borrower.display_name }} möchte „{{ item.name }}“ ausleihen.
+
+{% include "email/_period.txt" %}{% if booking.request_message %}
+Nachricht: „{{ booking.request_message }}“{% endif %}
+
+Bitte genehmigen oder ablehnen: {{ dashboard_url }}
+Zum Gerät: {{ item_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}

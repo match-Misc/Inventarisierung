@@ -1,0 +1,8 @@
+{% autoescape off %}Hallo {{ booking.borrower.first_name|default:booking.borrower.username }},
+
+{% if approved %}die Verlängerung für „{{ item.name }}“ wurde genehmigt. Neue Rückgabe: {{ booking.end_date|date:"d.m.Y" }}.{% else %}die Verlängerung für „{{ item.name }}“ bis {{ requested_end_date|date:"d.m.Y" }} wurde abgelehnt. Die Rückgabe bleibt am {{ booking.end_date|date:"d.m.Y" }}.{% if comment %}
+
+Kommentar: „{{ comment }}“{% endif %}{% endif %}
+
+Zum Gerät: {{ item_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}
