@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Gerät hinzufügen{% endblock %}
 {% block content %}
 <div class="row justify-content-center"><div class="col-lg-7">
   <a href="{% url 'inventory:item_list' %}" class="link-secondary">← Zur Geräteliste</a>
   <h1 class="mt-2">Gerät hinzufügen</h1>
   <p>Fotografiere das Gerät oder sein Typenschild. Du kannst auch nur einen Namen eingeben.</p>
-  <form method="post" enctype="multipart/form-data" class="card card-body gap-3">
+  <form method="post" enctype="multipart/form-data" class="card card-body gap-3" id="recognition-form">
     {% csrf_token %}
     {{ form.non_field_errors }}
     <div><label class="form-label" for="{{ form.name_hint.id_for_label }}">{{ form.name_hint.label }}</label>{{ form.name_hint }}{{ form.name_hint.errors }}</div>
@@ -14,5 +15,12 @@
     <p class="small text-body-secondary mb-0">Wenn du „Erkennen“ wählst, werden Name und ein verkleinertes Foto ohne EXIF-Daten an den konfigurierten KI-Dienst gesendet. Prüfe, ob personenbezogene Angaben auf dem Etikett sichtbar sind.</p>
     <button class="btn btn-primary" type="submit">Erkennen</button>
   </form>
+  <section id="recognition-progress" class="card card-body mt-3" aria-live="polite" hidden>
+    <div class="d-flex align-items-center gap-2"><span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span><strong>Erkennung läuft</strong></div>
+    <p id="recognition-current" class="mb-1 mt-2">Foto wird hochgeladen und vorbereitet.</p>
+    <ol id="recognition-steps" class="small text-body-secondary mb-0"></ol>
+  </section>
+  <div id="recognition-error" class="alert alert-danger mt-3" role="alert" hidden></div>
 </div></div>
 {% endblock %}
+{% block scripts %}<script defer src="{% static 'js/recognition.js' %}"></script>{% endblock %}

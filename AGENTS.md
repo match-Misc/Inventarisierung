@@ -142,6 +142,7 @@ Regeln:
 - Die Stufen einfach/mittel/schwierig wählen über Umgebungsvariablen konfigurierbare Bildmodelle. Mittel und schwierig dürfen zusätzlich nur Hersteller und Modell öffentlich recherchieren. Quellen werden nur angezeigt, wenn sie in den API-Zitationen enthalten sind.
 - Bei der ausdrücklich ausgelösten Bilderkennung wird das bereinigte Foto an OpenRouter gesendet. Ein Typenschild kann personenbezogene oder interne Nummern enthalten; die Upload-Seite weist darauf hin. Standort, Verantwortliche und Buchungen werden nicht übertragen.
 - Entwurfsfotos verfallen nach 24 Stunden und werden beim nächsten Aufruf der Eingabeseite unter `MEDIA_ROOT/.recognition-drafts/` bereinigt. Sie sind nicht über die allgemeine Medien-View zugänglich und nur über die Sitzung des hochladenden Nutzers abrufbar. Ohne KI-Schlüssel bleibt das manuelle Anlegen möglich.
+- Die Eingabeseite zeigt während der Erkennung echte Verarbeitungsschritte aus einer Streaming-Antwort: Upload, Erkennung, gegebenenfalls öffentliche Recherche und Vorbereitung des Vorschlags. Das Formular bleibt auch ohne Streaming nutzbar.
 
 ## 5. Projektplan und Stand der Umsetzung
 

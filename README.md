@@ -44,6 +44,8 @@ Recherchierte Kennwerte werden erst nach Prüfung durch die verantwortliche Pers
 Unter `/geraete/hinzufuegen/` kann jede angemeldete Person ein Foto aufnehmen oder einen Namen eingeben.
 Die Erkennung füllt einen bearbeitbaren Vorschlag aus. Erst nach Bestätigung wird das Gerät gespeichert;
 die anlegende Person wird verantwortlich. Ohne OpenRouter-Schlüssel funktioniert die Seite als manuelles Formular.
+Während der Verarbeitung zeigt die Seite den aktuellen Schritt und bereits erledigte Schritte an. Bei einer
+unterbrochenen Verbindung kann die Erkennung erneut gestartet werden.
 
 Die Stufen **Einfach**, **Mittel** und **Schwierig** verwenden standardmäßig `openai/gpt-4.1-nano`,
 `openai/gpt-4.1-mini` und `openai/gpt-4.1`. Sie lassen sich in `.env` mit

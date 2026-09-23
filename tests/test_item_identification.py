@@ -193,3 +193,51 @@ def test_medium_mode_researches_only_public_model_data(client, people, settings,
     )
     assert saved.status_code == 302
     assert ItemDocument.objects.get(item=Item.objects.get()).url == "https://example.org/t-1"
+
+
+@pytest.mark.django_db
+def test_stream_reports_work_before_review_and_keeps_draft(client, people, settings, monkeypatch):
+    owner, _, _ = people
+    client.force_login(owner)
+    settings.OPENROUTER_API_KEY = "test-key"
+    calls = []
+
+    def fake_recognition(name, photo, *, difficulty):
+        calls.append("recognition")
+        assert name == "T-1" and photo is None and difficulty == "medium"
+        return {"name": "Sensor", "manufacturer": "Demo", "model_number": "T-1"}
+
+    def fake_research(manufacturer, model_number, *, difficulty):
+        calls.append("research")
+        assert (manufacturer, model_number, difficulty) == ("Demo", "T-1", "medium")
+        return {"summary": "Datenblatt", "source_url": "https://example.org/t-1"}
+
+    monkeypatch.setattr("inventory.views.recognize_item", fake_recognition)
+    monkeypatch.setattr("inventory.views.research_item", fake_research)
+    response = client.post(
+        reverse("inventory:identify"),
+        {"name_hint": "T-1", "difficulty": "medium"},
+        HTTP_X_RECOGNITION_STREAM="1",
+    )
+    assert response.status_code == 200
+    assert response.streaming
+    chunks = list(response.streaming_content)
+    updates = [json.loads(chunk) for chunk in chunks]
+    assert [update["type"] for update in updates] == ["stage", "stage", "stage", "result"]
+    assert "Typenschild" in updates[0]["text"]
+    assert "\u00d6ffentliche" in updates[1]["text"]
+    assert "Vorschlag" in updates[2]["text"]
+    assert calls == ["recognition", "research"]
+    assert "Ger\u00e4t speichern" in updates[-1]["html"]
+    assert Item.objects.count() == 0
+    assert client.session["item_recognition_source"]["source_url"] == "https://example.org/t-1"
+
+
+@pytest.mark.django_db
+def test_stream_validation_error_is_reported_without_starting_recognition(client, people):
+    owner, _, _ = people
+    client.force_login(owner)
+    response = client.post(reverse("inventory:identify"), HTTP_X_RECOGNITION_STREAM="1")
+    assert response.status_code == 400
+    assert response.json()["errors"]
+    assert "item_recognition_draft" not in client.session

@@ -1,3 +1,4 @@
+import json
 import mimetypes
 import time
 from pathlib import Path
@@ -10,8 +11,9 @@ from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Q
-from django.http import FileResponse, Http404, HttpResponseNotAllowed
+from django.http import FileResponse, Http404, HttpResponseNotAllowed, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.utils import timezone
 
 from assistant_search.provider import ProviderUnavailable
@@ -132,6 +134,63 @@ def _allow_ai_call(user_id):
     return count <= settings.ASSISTANT_REQUESTS_PER_HOUR
 
 
+def _identify_steps(user_id, name_hint, photo_bytes, difficulty):
+    """Meldet die jeweils laufende Arbeit und liefert zuletzt den Vorschlag."""
+    proposal = {"name": name_hint}
+    source = None
+    notice = None
+    if not settings.OPENROUTER_API_KEY:
+        notice = ("info", "Kein KI-Schlüssel eingerichtet. Bitte Angaben selbst ausfüllen.")
+    elif not _allow_ai_call(user_id):
+        notice = ("warning", "Das persönliche KI-Stundenlimit ist erreicht. Bitte Angaben selbst ausfüllen.")
+    else:
+        yield "stage", "Gerät und Typenschild werden erkannt."
+        try:
+            proposal = recognize_item(name_hint, photo_bytes, difficulty=difficulty)
+        except ProviderUnavailable:
+            notice = (
+                "warning",
+                "Die KI-Erkennung ist gerade nicht verfügbar. Bitte Angaben selbst ausfüllen.",
+            )
+        if (
+            difficulty != "easy"
+            and proposal.get("manufacturer")
+            and proposal.get("model_number")
+            and _allow_ai_call(user_id)
+        ):
+            yield "stage", "Öffentliche Informationen zu Hersteller und Modell werden geprüft."
+            try:
+                source = research_item(
+                    proposal["manufacturer"], proposal["model_number"], difficulty=difficulty
+                )
+                if source:
+                    source["manufacturer"] = proposal["manufacturer"]
+                    source["model_number"] = proposal["model_number"]
+                    proposal["description"] = source["summary"]
+            except ProviderUnavailable:
+                notice = ("info", "Die Webrecherche ist gerade nicht verfügbar. Bitte Typdaten prüfen.")
+    yield "stage", "Der bearbeitbare Vorschlag wird vorbereitet."
+    yield "result", (proposal, source, notice)
+
+
+def _review_context(request, token, photo_bytes, proposal, source, notice):
+    initial = {key: proposal.get(key, "") for key in IdentifiedItemForm.Meta.fields}
+    initial["category"] = _category_initial(proposal.get("category", ""))
+    initial["loan_policy"] = Item.LoanPolicy.FREE
+    initial["condition"] = Item.Condition.OK
+    request.session["item_recognition_uncertainty"] = proposal.get("uncertainty", "")[:500]
+    request.session["item_recognition_source"] = source
+    return {
+        "form": IdentifiedItemForm(initial=initial),
+        "draft": token,
+        "has_photo": bool(photo_bytes),
+        "uncertainty": request.session["item_recognition_uncertainty"],
+        "source": source,
+        "notice_level": notice[0] if notice else "",
+        "notice_text": notice[1] if notice else "",
+    }
+
+
 @login_required
 def identify_item(request):
     if request.method not in {"GET", "POST"}:
@@ -145,6 +204,8 @@ def identify_item(request):
         )
     form = RecognitionInputForm(request.POST, request.FILES)
     if not form.is_valid():
+        if request.headers.get("X-Recognition-Stream") == "1":
+            return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
         return render(
             request,
             "inventory/identify.html",
@@ -157,61 +218,31 @@ def identify_item(request):
     photo = form.cleaned_data["photo"]
     difficulty = form.cleaned_data["difficulty"]
     photo_bytes = prepare_photo(photo) if photo else None
-    proposal = {"name": name_hint}
-    source = None
-    if settings.OPENROUTER_API_KEY:
-        if _allow_ai_call(request.user.pk):
-            try:
-                proposal = recognize_item(name_hint, photo_bytes, difficulty=difficulty)
-            except ProviderUnavailable:
-                messages.warning(
-                    request, "Die KI-Erkennung ist gerade nicht verfügbar. Bitte Angaben selbst ausfüllen."
-                )
-            if (
-                difficulty != "easy"
-                and proposal.get("manufacturer")
-                and proposal.get("model_number")
-                and _allow_ai_call(request.user.pk)
-            ):
-                try:
-                    source = research_item(
-                        proposal.get("manufacturer", ""),
-                        proposal.get("model_number", ""),
-                        difficulty=difficulty,
-                    )
-                    if source:
-                        source["manufacturer"] = proposal["manufacturer"]
-                        source["model_number"] = proposal["model_number"]
-                        proposal["description"] = source["summary"]
-                except ProviderUnavailable:
-                    messages.info(
-                        request, "Die Webrecherche ist gerade nicht verfügbar. Bitte Typdaten prüfen."
-                    )
-        else:
-            messages.warning(
-                request, "Das persönliche KI-Stundenlimit ist erreicht. Bitte Angaben selbst ausfüllen."
-            )
-    else:
-        messages.info(request, "Kein KI-Schlüssel eingerichtet. Bitte Angaben selbst ausfüllen.")
     token = create_draft(photo_bytes)
     request.session["item_recognition_draft"] = {"token": token, "created": time.time()}
-    initial = {key: proposal.get(key, "") for key in IdentifiedItemForm.Meta.fields}
-    initial["category"] = _category_initial(proposal.get("category", ""))
-    initial["loan_policy"] = Item.LoanPolicy.FREE
-    initial["condition"] = Item.Condition.OK
-    request.session["item_recognition_uncertainty"] = proposal.get("uncertainty", "")[:500]
-    request.session["item_recognition_source"] = source
-    return render(
-        request,
-        "inventory/identify_review.html",
-        {
-            "form": IdentifiedItemForm(initial=initial),
-            "draft": token,
-            "has_photo": bool(photo_bytes),
-            "uncertainty": request.session["item_recognition_uncertainty"],
-            "source": source,
-        },
-    )
+    steps = _identify_steps(request.user.pk, name_hint, photo_bytes, difficulty)
+    if request.headers.get("X-Recognition-Stream") == "1":
+
+        def stream():
+            for kind, value in steps:
+                if kind == "stage":
+                    yield json.dumps({"type": "stage", "text": value}, ensure_ascii=False) + "\n"
+                else:
+                    context = _review_context(request, token, photo_bytes, *value)
+                    request.session.save()
+                    html = render_to_string("inventory/identify_review.html", context, request=request)
+                    yield json.dumps({"type": "result", "html": html}, ensure_ascii=False) + "\n"
+
+        response = StreamingHttpResponse(stream(), content_type="application/x-ndjson; charset=utf-8")
+        response["Cache-Control"] = "no-store"
+        response["X-Accel-Buffering"] = "no"
+        return response
+
+    context = None
+    for kind, value in steps:
+        if kind == "result":
+            context = _review_context(request, token, photo_bytes, *value)
+    return render(request, "inventory/identify_review.html", context)
 
 
 @login_required
