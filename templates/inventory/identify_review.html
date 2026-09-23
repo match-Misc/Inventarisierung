@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Gerät prüfen{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8">
+  <h1>Vorschlag prüfen</h1>
+  <p>Bitte alle Angaben prüfen und fehlende Felder ergänzen. Erst „Gerät speichern“ legt den Eintrag an. Du wirst als verantwortliche Person eingetragen.</p>
+  {% if uncertainty %}<div class="alert alert-warning"><strong>Unsicherheit der Erkennung:</strong> {{ uncertainty }}</div>{% endif %}
+  {% if source %}<p class="small">Öffentliche Quelle zum Modell: <a href="{{ source.source_url }}" target="_blank" rel="noopener noreferrer">{{ source.source_url }}</a>. Bitte die Beschreibung mit dem Typenschild abgleichen.</p>{% endif %}
+  {% if has_photo %}<img src="{% url 'inventory:identified_photo' draft %}" alt="Aufgenommenes Gerät" class="img-fluid rounded mb-3" style="max-height: 18rem">{% endif %}
+  <form method="post" action="{% url 'inventory:identify_save' %}" class="card card-body">
+    {% csrf_token %}<input type="hidden" name="draft" value="{{ draft }}">
+    {{ form.non_field_errors }}
+    <div class="row g-3">
+      {% for field in form %}
+      <div class="{% if field.name == 'description' %}col-12{% else %}col-md-6{% endif %}">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+        {{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}{{ field.errors }}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-4">
+      <button type="submit" class="btn btn-primary">Gerät speichern</button>
+      <a href="{% url 'inventory:identify' %}" class="btn btn-outline-secondary">Neu beginnen</a>
+    </div>
+  </form>
+</div></div>
+{% endblock %}

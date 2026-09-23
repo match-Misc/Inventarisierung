@@ -130,11 +130,18 @@ Regeln:
 
 ### KI-Inventarsuche
 
-- OpenRouter erhält ausschließlich die Nutzerfrage und bei einer Recherche Hersteller, Modell und gesuchten Kennwert. Verantwortliche, Standorte, Serien-/Inventarnummern und Buchungen bleiben lokal.
+- Bei der KI-Inventarsuche erhält OpenRouter ausschließlich die Nutzerfrage und bei einer Recherche Hersteller, Modell und gesuchten Kennwert. Verantwortliche, Standorte, Serien-/Inventarnummern und Buchungen bleiben dabei lokal.
 - Das Modell erzeugt Suchkriterien, aber weder SQL noch Buchungen. Zahlen- und Einheitenvergleiche erfolgen lokal mit Pint.
 - Webtreffer werden nur als ungeprüfte `SpecificationProposal` gespeichert, wenn eine HTTPS-Quelle in den API-Zitationen enthalten ist. Erst Verantwortliche oder Admins übernehmen sie als `ItemSpecification`.
 - Der Browser hält höchstens den aktuellen Chat in `sessionStorage`. Der Server speichert keine Chat-Historie.
 - Requests verlangen Zero Data Retention und verbieten Datenverwendung beim Provider. Ohne KI-Schlüssel oder bei einem Provider-Ausfall bleibt die lokale Suche nutzbar.
+
+### Geräteerkennung beim Anlegen
+
+- Unter `/geraete/hinzufuegen/` können angemeldete Nutzer einen Namen und/oder ein Foto eingeben. Das Foto wird ohne EXIF-Daten verkleinert; erst nach Prüfung des bearbeitbaren Vorschlags wird ein `Item` angelegt. Die anlegende Person wird verantwortlich.
+- Die Stufen einfach/mittel/schwierig wählen über Umgebungsvariablen konfigurierbare Bildmodelle. Mittel und schwierig dürfen zusätzlich nur Hersteller und Modell öffentlich recherchieren. Quellen werden nur angezeigt, wenn sie in den API-Zitationen enthalten sind.
+- Bei der ausdrücklich ausgelösten Bilderkennung wird das bereinigte Foto an OpenRouter gesendet. Ein Typenschild kann personenbezogene oder interne Nummern enthalten; die Upload-Seite weist darauf hin. Standort, Verantwortliche und Buchungen werden nicht übertragen.
+- Entwurfsfotos verfallen nach 24 Stunden und werden beim nächsten Aufruf der Eingabeseite unter `MEDIA_ROOT/.recognition-drafts/` bereinigt. Sie sind nicht über die allgemeine Medien-View zugänglich und nur über die Sitzung des hochladenden Nutzers abrufbar. Ohne KI-Schlüssel bleibt das manuelle Anlegen möglich.
 
 ## 5. Projektplan und Stand der Umsetzung
 
@@ -175,8 +182,10 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [x] kostenbegrenzte OpenRouter-Anbindung mit lokaler Ausweichsuche und Datenschutzfiltern
    - [x] Quellenprüfung und Freigabeworkflow für recherchierte Kennwerte
    - [x] Weiterleitung zu Detailseite und bestätigtem Buchungsformular
+10. **Geräteerkennung**
+   - [x] Foto-/Namenseingabe, Schwierigkeitsstufen, quellengebundene Typrecherche, bearbeitbarer Vorschlag und bestätigtes Anlegen
 
-**Weitere Issues (noch nicht eingeplant):** #7 Erkennung über das Typenschild, #10 Geräteliste importieren, #11 und #12 Geräte- bzw. Inventarliste aus dem Bestellungsordner.
+**Weitere Issues (noch nicht eingeplant):** #10 Geräteliste importieren, #11 und #12 Geräte- bzw. Inventarliste aus dem Bestellungsordner.
 
 **Später:** LDAP-Anbindung, QR-Etiketten, Änderungshistorie, Aufbewahrungsfrist für die Ausleihhistorie.
 

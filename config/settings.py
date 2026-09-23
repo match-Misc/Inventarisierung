@@ -134,6 +134,11 @@ REMINDER_PENDING_REQUEST_DAYS = env.int("REMINDER_PENDING_REQUEST_DAYS", default
 # Der Schlüssel bleibt ausschließlich in der Serverumgebung.
 OPENROUTER_API_KEY = env("OPENROUTER_API_KEY", default="")
 ASSISTANT_MODEL = env("ASSISTANT_MODEL", default="openai/gpt-6-luna")
+ITEM_RECOGNITION_MODELS = {
+    "easy": env("ITEM_RECOGNITION_MODEL_EASY", default="openai/gpt-4.1-nano"),
+    "medium": env("ITEM_RECOGNITION_MODEL_MEDIUM", default="openai/gpt-4.1-mini"),
+    "hard": env("ITEM_RECOGNITION_MODEL_HARD", default="openai/gpt-4.1"),
+}
 ASSISTANT_WEB_SEARCH = env.bool("ASSISTANT_WEB_SEARCH", default=True)
 ASSISTANT_REQUESTS_PER_HOUR = env.int("ASSISTANT_REQUESTS_PER_HOUR", default=20)
 

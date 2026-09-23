@@ -169,6 +169,7 @@ def test_provider_enforces_privacy_routing(monkeypatch, settings):
         "data_collection": "deny",
         "require_parameters": True,
     }
+    assert "temperature" not in captured["payload"]
 
 
 @pytest.mark.django_db

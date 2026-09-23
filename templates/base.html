@@ -25,6 +25,7 @@
       <div class="collapse navbar-collapse" id="main-nav">
         <ul class="navbar-nav me-auto">
           <li class="nav-item"><a class="nav-link {% if url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Geräte</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'inventory:identify' %}">Gerät hinzufügen</a></li>
           <li class="nav-item"><a class="nav-link {% if namespace == 'assistant_search' %}active{% endif %}" href="{% url 'assistant_search:chat' %}">KI-Suche</a></li>
           <li class="nav-item"><a class="nav-link {% if namespace == 'loans' %}active{% endif %}" href="{% url 'loans:list' %}">Meine Buchungen</a></li>
           <li class="nav-item"><a class="nav-link {% if namespace == 'floorplan' %}active{% endif %}" href="{% url 'floorplan:list' %}">Hallenplan</a></li>
