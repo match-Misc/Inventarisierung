@@ -65,6 +65,26 @@
     render();
   }
 
+  async function readResult(response) {
+    if (response.redirected && response.url.includes("/konto/login/")) {
+      throw new Error("Deine Anmeldung ist abgelaufen. Bitte lade die Seite neu und melde dich erneut an.");
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      if (response.status === 403) {
+        throw new Error("Die Anfrage wurde abgelehnt. Bitte lade die Seite neu und versuche es erneut.");
+      }
+      throw new Error(`Der Server konnte die Anfrage nicht verarbeiten (${response.status}).`);
+    }
+
+    try {
+      return await response.json();
+    } catch (_) {
+      throw new Error("Der Server hat eine ungültige Antwort geliefert. Bitte versuche es erneut.");
+    }
+  }
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const question = input.value.trim();
@@ -80,7 +100,7 @@
         headers: { "Content-Type": "application/json", "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value },
         body: JSON.stringify({ question, history }),
       });
-      const result = await response.json();
+      const result = await readResult(response);
       if (!response.ok) throw new Error(result.error || "Die Suche ist fehlgeschlagen.");
       messages.push({ role: "assistant", content: result.answer, cards: result.cards });
     } catch (error) {
