@@ -3,9 +3,12 @@
 {% block title %}Gerät hinzufügen{% endblock %}
 {% block content %}
 <div class="row justify-content-center"><div class="col-lg-7">
-  <a href="{% url 'inventory:item_list' %}" class="link-secondary">← Zur Geräteliste</a>
-  <h1 class="mt-2">Gerät hinzufügen</h1>
-  <p>Fotografiere das Gerät oder sein Typenschild. Du kannst auch nur einen Namen eingeben.</p>
+  <div class="app-page-heading">
+    <a href="{% url 'inventory:item_list' %}" class="link-secondary">← Zur Geräteliste</a>
+    <p class="app-eyebrow mt-3 mb-1">Inventar erweitern</p>
+    <h1 class="h3 mb-2">Gerät hinzufügen</h1>
+    <p class="mb-0">Fotografiere das Gerät oder sein Typenschild. Du kannst auch nur einen Namen eingeben.</p>
+  </div>
   <form method="post" enctype="multipart/form-data" class="card card-body gap-3" id="recognition-form">
     {% csrf_token %}
     {{ form.non_field_errors }}

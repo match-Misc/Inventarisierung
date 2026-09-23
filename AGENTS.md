@@ -206,6 +206,9 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [x] Foto-/Namenseingabe, Schwierigkeitsstufen, quellengebundene Typrecherche, bearbeitbarer Vorschlag und bestätigtes Anlegen
 11. **Bestellungen-Datenbank**
    - [x] Modell, 367 importierte Bestellungen, Filteransicht, Admin und monatlicher Ordner-Sync
+12. **Gestaltung der Nutzerwebsite**
+   - [x] Grau-grünes Layout für Navigation, Login, Dashboard, Formulare, Tabellen und Funktionsseiten; responsive Menüstruktur und kontrastreiche Fokusmarkierungen
+   - [ ] Originales „match“-Logo als Datei in der Kopfzeile einbinden (Datei steht noch aus)
 
 **Weitere Issues (noch nicht eingeplant):** #10 Geräteliste importieren; Verknüpfung von Bestellungen mit physischen Inventargegenständen.
 

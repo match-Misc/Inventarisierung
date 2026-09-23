@@ -3,10 +3,14 @@
 {% block title %}Übersicht{% endblock %}
 {% block content %}
 {% with next=request.get_full_path %}
-<div class="d-flex flex-wrap align-items-center gap-2 mb-4">
-  <h1 class="h3 mb-0 me-auto">Hallo {{ user.first_name|default:user.username }}!</h1>
-  <a class="btn btn-primary" href="{% url 'inventory:item_list' %}"><i class="bi bi-search"></i> Gerät suchen &amp; ausleihen</a>
-</div>
+<section class="app-hero d-flex flex-wrap align-items-center gap-3 mb-4">
+  <div class="me-auto">
+    <p class="app-eyebrow mb-1">Dein Überblick</p>
+    <h1 class="h3 mb-2">Hallo {{ user.first_name|default:user.username }}!</h1>
+    <p class="text-body-secondary mb-0">Geräte, Ausleihen und Anfragen an einem Ort.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'inventory:item_list' %}"><i class="bi bi-search" aria-hidden="true"></i> Gerät suchen &amp; ausleihen</a>
+</section>
 
 <div class="row g-4">
   <div class="col-lg-6">

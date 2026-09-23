@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Anmelden{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center app-login">
   <div class="col-sm-9 col-md-6 col-lg-4">
     <div class="text-center mb-4">
-      <i class="bi bi-box-seam display-5 text-primary"></i>
-      <h1 class="h4 mt-2">{{ site_name }}</h1>
+      <span class="app-brand-logo" aria-hidden="true">match</span>
+      <p class="app-eyebrow mt-3 mb-1">{{ app_site_name }}</p>
+      <h1 class="h3 mb-2">Willkommen zurück</h1>
+      <p class="text-body-secondary mb-0">Melde dich mit deiner Institutskennung an.</p>
     </div>
     <div class="card shadow-sm">
       <div class="card-body p-4">

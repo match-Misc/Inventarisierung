@@ -3,52 +3,51 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{% endblock %} · {{ site_name }}</title>
+  <title>{% block title %}{% endblock %} · {{ app_site_name }}</title>
   <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
   <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-body-tertiary" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="app-body" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   {% if user.is_authenticated %}
   {% with url_name=request.resolver_match.url_name namespace=request.resolver_match.namespace %}
-  <nav class="navbar navbar-expand-lg bg-body border-bottom">
-    <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'dashboard' %}">
-        <i class="bi bi-box-seam"></i> {{ site_name }}
+  <nav class="navbar navbar-expand-xl navbar-dark app-navbar" aria-label="Hauptnavigation">
+    <div class="container-fluid app-navbar-inner">
+      <a class="navbar-brand app-brand d-flex align-items-center gap-2" href="{% url 'dashboard' %}">
+        <span class="app-brand-logo" aria-hidden="true">match</span><span class="app-brand-name">{{ app_site_name }}</span>
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav"
               aria-controls="main-nav" aria-expanded="false" aria-label="Navigation umschalten">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="main-nav">
-        <ul class="navbar-nav me-auto">
+        <ul class="navbar-nav app-nav-links me-auto">
           <li class="nav-item">
             <a class="nav-link {% if url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Übersicht
               {% if pending_approvals_count %}<span class="badge rounded-pill text-bg-warning" title="Offene Anfragen an dich">{{ pending_approvals_count }}</span>{% endif %}</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if namespace == 'inventory' or namespace == 'loans' and url_name != 'calendar' %}active{% endif %}" href="{% url 'inventory:item_list' %}">Geräte</a>
+            <a class="nav-link {% if namespace == 'inventory' and url_name != 'identify' or namespace == 'loans' and url_name != 'calendar' %}active{% endif %}" href="{% url 'inventory:item_list' %}">Geräte</a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if url_name == 'calendar' %}active{% endif %}" href="{% url 'loans:calendar' %}">Kalender</a>
           </li>
-          <li class="nav-item"><a class="nav-link {% if namespace == 'inventory' and url_name == 'identify' %}active{% endif %}" href="{% url 'inventory:identify' %}">Gerät hinzufügen</a></li>
           <li class="nav-item">
             <a class="nav-link {% if namespace == 'assistant_search' and url_name == 'chat' %}active{% endif %}" href="{% url 'assistant_search:chat' %}">KI-Suche</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link {% if namespace == 'floorplan' %}active{% endif %}" href="{% url 'floorplan:list' %}">Hallenplan</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link {% if namespace == 'assistant_search' and url_name != 'chat' %}active{% endif %}" href="{% url 'assistant_search:proposals' %}">Kennwerte prüfen</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link {% if namespace == 'procurement' %}active{% endif %}" href="{% url 'procurement:list' %}">Bestellungen</a>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {% if namespace == 'floorplan' or namespace == 'procurement' or namespace == 'assistant_search' and url_name != 'chat' %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Mehr</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item {% if namespace == 'floorplan' %}active{% endif %}" href="{% url 'floorplan:list' %}">Hallenplan</a></li>
+              <li><a class="dropdown-item {% if namespace == 'assistant_search' and url_name != 'chat' %}active{% endif %}" href="{% url 'assistant_search:proposals' %}">Kennwerte prüfen</a></li>
+              <li><a class="dropdown-item {% if namespace == 'procurement' %}active{% endif %}" href="{% url 'procurement:list' %}">Bestellungen</a></li>
+            </ul>
           </li>
         </ul>
-        <ul class="navbar-nav">
+        <a class="btn btn-brand app-nav-action me-xl-3 my-2 my-xl-0 {% if namespace == 'inventory' and url_name == 'identify' %}active{% endif %}" href="{% url 'inventory:identify' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Gerät hinzufügen</a>
+        <ul class="navbar-nav app-account-nav">
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-person-circle"></i> {{ user.display_name }}
@@ -73,7 +72,7 @@
   {% endwith %}
   {% endif %}
 
-  <main class="{% block container %}container{% endblock %} py-4">
+  <main class="app-main {% block container %}container{% endblock %} py-4 py-lg-5">
     {% for message in messages %}
       <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
         {{ message }}

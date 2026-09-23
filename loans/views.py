@@ -171,9 +171,9 @@ def extend_booking(request, pk):
 # ---------- Buchungskalender (Karina, #5) ----------
 
 STATUS_COLORS = {
-    Booking.Status.ACTIVE: "#0d6efd",
-    Booking.Status.RESERVED: "#20c997",
-    Booking.Status.REQUESTED: "#ffc107",
+    Booking.Status.ACTIVE: "#4c6927",
+    Booking.Status.RESERVED: "#28765f",
+    Booking.Status.REQUESTED: "#946200",
 }
 OVERDUE_COLOR = "#dc3545"
 
