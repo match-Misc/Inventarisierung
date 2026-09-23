@@ -1,0 +1,9 @@
+{% autoescape off %}Hallo {{ recipient.first_name|default:recipient.username }},
+
+dein Gerät „{{ item.name }}“ ist überfällig: {{ booking.borrower.display_name }} hätte es am {{ booking.end_date|date:"d.m.Y" }} zurückgeben sollen ({{ days_overdue }} Tag{{ days_overdue|pluralize:"e" }} überfällig).
+
+Kontakt: {{ booking.borrower.email }}{% if booking.borrower.phone %} · {{ booking.borrower.phone }}{% endif %}{% if booking.usage_location %}
+Einsatzort laut Buchung: {{ booking.usage_location }}{% endif %}
+
+Liegt das Gerät schon wieder an seinem Platz, kannst du die Rückgabe selbst buchen: {{ item_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}

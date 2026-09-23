@@ -123,6 +123,10 @@ MAX_DOCUMENT_UPLOAD_MB = env.int("MAX_DOCUMENT_UPLOAD_MB", default=100)
 # E-Mail, z. B. EMAIL_URL=smtp+tls://benutzer:passwort@smtp.example.org:587
 # Ohne EMAIL_URL werden Mails nur auf der Konsole ausgegeben.
 vars().update(env.email_url("EMAIL_URL", default="consolemail://"))
+# Entwicklung: Mails als Dateien ablegen, um sie ansehen zu können (z. B. EMAIL_FILE_PATH=sent_emails)
+if env("EMAIL_FILE_PATH", default="") and not env("EMAIL_URL", default=""):
+    EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+    EMAIL_FILE_PATH = BASE_DIR / env("EMAIL_FILE_PATH")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=f"{SITE_NAME} <inventar@localhost>")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 

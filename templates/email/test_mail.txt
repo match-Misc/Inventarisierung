@@ -1,0 +1,6 @@
+{% autoescape off %}Hallo {{ recipient.first_name|default:recipient.username }},
+
+das ist eine Testmail aus dem {{ site_name }}. Wenn du sie liest, kommen die Benachrichtigungen bei dir an.
+
+Zur Übersicht: {{ dashboard_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}

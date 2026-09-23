@@ -1,0 +1,9 @@
+{% autoescape off %}Hallo {{ recipient.first_name|default:recipient.username }},
+
+die Rückgabe von „{{ item.name }}“ war am {{ booking.end_date|date:"d.m.Y" }} fällig und ist seit {{ days_overdue }} Tag{{ days_overdue|pluralize:"en" }} überfällig.
+
+Bitte gib das Gerät zurück ({{ item.location }}) und bestätige die Rückgabe im Tool – oder verlängere die Ausleihe, falls du es noch brauchst: {{ dashboard_url }}
+Solange das Gerät als ausgeliehen gilt, kann es niemand anderes buchen.
+
+Verantwortlich für das Gerät: {{ item.responsible.display_name }}{% if item.responsible.email %} ({{ item.responsible.email }}){% endif %}
+{% include "email/_footer.txt" %}{% endautoescape %}

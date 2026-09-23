@@ -1,4 +1,4 @@
-{% autoescape off %}Hallo,
+{% autoescape off %}Hallo {{ recipient.first_name|default:recipient.username }},
 
 {{ by_user.display_name }} hat eine Buchung für „{{ item.name }}“ storniert.
 

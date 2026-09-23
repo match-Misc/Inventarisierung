@@ -91,10 +91,11 @@ class ReminderLog(models.Model):
     """Versandprotokoll der täglichen Erinnerungen (verhindert doppelte Mails)."""
 
     class Kind(models.TextChoices):
-        DUE_TOMORROW = "due_tomorrow", "Rückgabe morgen fällig"
-        OVERDUE = "overdue", "Überfällig"
-        STARTS_TODAY = "starts_today", "Reservierung beginnt heute"
-        PENDING_REQUEST = "pending_request", "Offene Anfrage"
+        STARTS_SOON = "starts_soon", "Reservierung beginnt"
+        DUE_SOON = "due_soon", "Rückgabe fällig"
+        OVERDUE = "overdue", "Überfällig (an Ausleiher/in)"
+        OWNER_OVERDUE = "owner_overdue", "Überfällig (an Verantwortliche/n)"
+        PENDING_REQUEST = "pending_request", "Unbeantwortete Anfrage"
 
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="reminders")
     kind = models.CharField("Art", max_length=20, choices=Kind.choices)

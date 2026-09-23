@@ -2,7 +2,13 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .invitations import send_invitation
-from .models import User
+from .models import NotificationPreferences, User
+
+
+class NotificationPreferencesInline(admin.StackedInline):
+    model = NotificationPreferences
+    can_delete = False
+    verbose_name_plural = "Benachrichtigungen"
 
 
 @admin.register(User)
@@ -10,7 +16,7 @@ class UserAdmin(BaseUserAdmin):
     list_display = ("username", "last_name", "first_name", "email", "is_active", "is_staff")
     fieldsets = (
         *BaseUserAdmin.fieldsets,
-        ("Kontakt & Benachrichtigungen", {"fields": ("phone", "room", "email_reminders")}),
+        ("Kontakt", {"fields": ("phone", "room")}),
     )
     add_fieldsets = (
         (
@@ -34,6 +40,7 @@ class UserAdmin(BaseUserAdmin):
             },
         ),
     )
+    inlines = [NotificationPreferencesInline]
     actions = ["send_invitations"]
 
     @admin.action(description="Einladung senden (Link zum Passwort-Setzen)")

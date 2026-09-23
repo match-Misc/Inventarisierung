@@ -128,6 +128,19 @@ Regeln:
 - **Alle Statuswechsel laufen über `loans/services.py`.** Das gilt für Views, Admin-Aktionen und Commands, und dort sollen auch die Tests ansetzen. Die Funktionen laufen in `transaction.atomic()` und sperren das Gerät mit `select_for_update()`. Fachliche Fehler lösen `BookingError` aus (die Meldung wird Nutzer:innen angezeigt), fehlende Rechte `PermissionDenied`.
 - **E-Mails** werden mit `transaction.on_commit` verschickt. Ein Versandfehler wird nur geloggt und blockiert nichts. In Tests `django_capture_on_commit_callbacks(execute=True)` verwenden.
 
+### Benachrichtigungen
+
+- **Einstellungen:** Jede Person stellt unter `/konto/benachrichtigungen/` ein, welche E-Mails sie bekommt. Die Werte liegen im Modell `accounts.NotificationPreferences`, abrufbar über `user.notification_settings`; beim ersten Zugriff werden sie mit Standardwerten angelegt.
+- **Versand:** Jede E-Mail-Art ist in `loans/notifications.py` an eine Einstellung gebunden: `send(user, setting, …)`.
+  - `setting=None` heißt Pflicht-Mail, z. B. die Mahnung bei überfälliger Rückgabe und die Testmail.
+  - Rückgaben mit Hinweis prüfen nur den Hauptschalter.
+- **Sofort-Mails** kommen aus `loans/services.py`: Anfrage, Entscheidung, Verlängerung, Storno, Rückgabe, „Gerät ist wieder da“ (an Reservierungen in den nächsten 3 Tagen), verfallene Buchungen und Aktivität an den eigenen Geräten.
+- **Täglicher Lauf:** `python manage.py send_reminders` (`loans/reminders.py`).
+  - Er verschickt: „Reservierung beginnt“, „Rückgabe fällig“, Mahnungen bei Überfälligkeit (an die ausleihende Person im gewählten Abstand; an die verantwortliche Person am ersten Tag, danach wöchentlich), Sammelmails zu unbeantworteten Anfragen und die Mitteilung über verfallene Buchungen.
+  - Das `ReminderLog` verhindert doppelten Versand. Mehrere Läufe am Tag schaden deshalb nicht.
+  - Einplanen auf dem Server: Linux-cron `0 7 * * * cd /pfad && python manage.py send_reminders`, Windows über die Aufgabenplanung, Docker mit `docker compose exec -T web python manage.py send_reminders`.
+- **E-Mails in der Entwicklung:** Mit `EMAIL_FILE_PATH=sent_emails` in `.env` landen die Mails als Dateien in `sent_emails/` (der Ordner ist gitignored). Ohne diese Einstellung werden sie auf der Konsole ausgegeben, im Betrieb über `EMAIL_URL` (SMTP) verschickt.
+
 ### KI-Inventarsuche
 
 - OpenRouter erhält ausschließlich die Nutzerfrage und bei einer Recherche Hersteller, Modell und gesuchten Kennwert. Verantwortliche, Standorte, Serien-/Inventarnummern und Buchungen bleiben lokal.
@@ -160,7 +173,7 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [x] Buchungsformular, Aktionen (genehmigen, ablehnen, stornieren, entnehmen, zurückgeben, verlängern), Übersicht unter `/`, Tests
 4. **Kalender** (#5): [ ] JSON-Feed unter `/kalender/events/` (Enddatum exklusiv, also +1 Tag), Kalenderseite mit Filtern, Gerätekalender mit Zeitraumauswahl
 5. **Konten** (#6): [ ] Profilseite, Passwort vergessen und ändern (Templates)
-6. **Erinnerungen:** [ ] `manage.py send_reminders` (Rückgabe morgen fällig, überfällig, Reservierung beginnt heute, Sammelmail zu offenen Anfragen, Verfallen-Logik), abgesichert gegen Doppelversand über `ReminderLog`
+6. **Benachrichtigungen und Erinnerungen:** [x] Einstellungen je Person, Sofort-Mails, täglicher Lauf `send_reminders` mit `ReminderLog`, Tests. [ ] Auf dem Server täglich einplanen (Schritt 7)
 7. **Demo und Betrieb**
    - [x] `manage.py seed_demo` (Testnutzer torge, tobias, dasha, karina, robert, Passwort `demo1234`; KUKA KR6, UR16, Schweißgerät, Sony Kamera)
    - [ ] `Dockerfile` und `compose.yaml` (web + postgres)
@@ -218,7 +231,7 @@ pytest                                     # Tests
 ruff check . && ruff format .              # Lint und Format (vor jedem Commit)
 python manage.py check                     # Django-Systemprüfung
 python manage.py import_floorplan skizze.pptx --name Versuchsfeld   # Hallenplan aus PowerPoint übernehmen
-python manage.py send_reminders            # tägliche Erinnerungen (in Arbeit, Schritt 6)
+python manage.py send_reminders            # tägliche Erinnerungen (einmal täglich einplanen)
 python manage.py seed_demo                 # Testnutzer, Beispielgeräte und -buchungen (nur mit DEBUG=True)
 python manage.py expire_bookings           # verstrichene Anfragen/Reservierungen freigeben
 ```

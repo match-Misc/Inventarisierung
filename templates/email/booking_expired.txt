@@ -1,0 +1,6 @@
+{% autoescape off %}Hallo {{ recipient.first_name|default:recipient.username }},
+
+{% if booking.decided_at %}deine Reservierung für „{{ item.name }}“ ({{ booking.start_date|date:"d.m.Y" }} bis {{ booking.end_date|date:"d.m.Y" }}) ist verfallen, weil die Entnahme nicht bestätigt wurde.{% else %}deine Anfrage für „{{ item.name }}“ ({{ booking.start_date|date:"d.m.Y" }} bis {{ booking.end_date|date:"d.m.Y" }}) wurde nicht rechtzeitig beantwortet und ist verfallen.{% endif %}
+
+Falls du das Gerät noch brauchst, buche es bitte neu: {{ item_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}
