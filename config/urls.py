@@ -18,5 +18,6 @@ urlpatterns = [
     path("medien/<path:path>", serve_media, name="serve_media"),
     path("konto/", include("accounts.urls")),
     path("konto/", include("django.contrib.auth.urls")),
+    path("bestellungen/", include("procurement.urls")),
     path("admin/", admin.site.urls),
 ]
