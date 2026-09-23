@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load inventory_tags %}
+{% block title %}Übersicht{% endblock %}
+{% block content %}
+{% with next=request.get_full_path %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+  <h1 class="h3 mb-0 me-auto">Hallo {{ user.first_name|default:user.username }}!</h1>
+  <a class="btn btn-primary" href="{% url 'inventory:item_list' %}"><i class="bi bi-search"></i> Gerät suchen &amp; ausleihen</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card mb-4">
+      <div class="card-header"><i class="bi bi-box-arrow-right"></i> Meine Ausleihen</div>
+      <ul class="list-group list-group-flush">
+        {% for booking in active %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between flex-wrap gap-2">
+              <div>
+                <a class="fw-semibold" href="{{ booking.item.get_absolute_url }}">{{ booking.item.name }}</a>
+                {% booking_badge booking %}
+                <div class="small {% if booking.is_overdue %}text-danger fw-semibold{% else %}text-body-secondary{% endif %}">
+                  Rückgabe bis {{ booking.end_date|date:"d.m.Y" }}{% if booking.requested_end_date %} · Verlängerung bis {{ booking.requested_end_date|date:"d.m.Y" }} angefragt{% endif %}
+                </div>
+                <div class="small text-body-secondary">Ablageort: {{ booking.item.location }}</div>
+              </div>
+              {% include "loans/partials/booking_actions.html" %}
+            </div>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-body-secondary small">Du hast gerade nichts ausgeliehen.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header"><i class="bi bi-calendar-check"></i> Meine Reservierungen &amp; Anfragen</div>
+      <ul class="list-group list-group-flush">
+        {% for booking in upcoming %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between flex-wrap gap-2">
+              <div>
+                <a class="fw-semibold" href="{{ booking.item.get_absolute_url }}">{{ booking.item.name }}</a>
+                {% booking_badge booking %}
+                <div class="small text-body-secondary">{{ booking.start_date|date:"d.m.Y" }} – {{ booking.end_date|date:"d.m.Y" }}
+                  {% if booking.status == "requested" %} · wartet auf {{ booking.item.responsible.display_name }}{% endif %}</div>
+              </div>
+              {% include "loans/partials/booking_actions.html" %}
+            </div>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-body-secondary small">Keine offenen Reservierungen oder Anfragen.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card mb-4 {% if requests or extensions %}border-warning{% endif %}" id="anfragen">
+      <div class="card-header"><i class="bi bi-inbox"></i> Anfragen an mich
+        {% if requests or extensions %}<span class="badge text-bg-warning">{{ pending_approvals_count }}</span>{% endif %}
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for booking in requests %}
+          <li class="list-group-item">
+            <a class="fw-semibold" href="{{ booking.item.get_absolute_url }}">{{ booking.item.name }}</a>
+            <div class="small"><strong>{{ booking.borrower.display_name }}</strong> möchte ausleihen:
+              {{ booking.start_date|date:"d.m.Y" }} – {{ booking.end_date|date:"d.m.Y" }}</div>
+            {% if booking.purpose %}<div class="small text-body-secondary">Zweck: {{ booking.purpose }}</div>{% endif %}
+            {% if booking.request_message %}<div class="small fst-italic">„{{ booking.request_message }}“</div>{% endif %}
+            {% include "loans/partials/decision.html" %}
+          </li>
+        {% endfor %}
+        {% for booking in extensions %}
+          <li class="list-group-item">
+            <a class="fw-semibold" href="{{ booking.item.get_absolute_url }}">{{ booking.item.name }}</a>
+            <div class="small"><strong>{{ booking.borrower.display_name }}</strong> möchte verlängern:
+              bis {{ booking.end_date|date:"d.m.Y" }} → bis {{ booking.requested_end_date|date:"d.m.Y" }}</div>
+            {% include "loans/partials/decision.html" with extension=True %}
+          </li>
+        {% endfor %}
+        {% if not requests and not extensions %}
+          <li class="list-group-item text-body-secondary small">Keine offenen Anfragen.</li>
+        {% endif %}
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-person-badge"></i> Geräte, für die ich verantwortlich bin</span>
+        <a class="small" href="{% url 'inventory:item_list' %}?meine=1">alle</a>
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for item in my_items %}
+          <li class="list-group-item d-flex justify-content-between flex-wrap gap-2">
+            <span><a href="{{ item.get_absolute_url }}">{{ item.name }}</a> {% policy_icon item %}</span>
+            <span>{% item_status item %}</span>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-body-secondary small">Du bist noch für keine Geräte verantwortlich.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

@@ -1,3 +1,0 @@
-{% extends "base.html" %}
-{% block title %}Offene Anfragen{% endblock %}
-{% block content %}<h1>Offene Anfragen</h1><div class="list-group">{% for booking in bookings %}<a class="list-group-item list-group-item-action" href="{% url 'loans:detail' booking.pk %}"><strong>{{ booking.item.name }}</strong> · {{ booking.borrower.display_name }} · {{ booking.start_date|date:"d.m.Y" }}–{{ booking.end_date|date:"d.m.Y" }}{% if booking.requested_end_date %} · Verlängerung bis {{ booking.requested_end_date|date:"d.m.Y" }}{% endif %}</a>{% empty %}<div class="alert alert-info">Keine offenen Anfragen.</div>{% endfor %}</div>{% endblock %}
