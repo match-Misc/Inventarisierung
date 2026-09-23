@@ -4,7 +4,8 @@ from . import views
 
 app_name = "inventory"
 
+# Eingebunden unter /geraete/
 urlpatterns = [
-    path("geraete/", views.item_list, name="item_list"),
-    path("geraete/<int:pk>/", views.item_detail, name="item_detail"),
+    path("", views.item_list, name="item_list"),
+    path("<int:pk>/", views.item_detail, name="item_detail"),
 ]

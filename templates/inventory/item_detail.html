@@ -42,6 +42,15 @@
         </tbody>
       </table>
     </div>
+    {% with specs=item.specifications.all %}{% if specs %}
+      <div class="card mb-4">
+        <div class="card-header">Geprüfte Kennwerte</div>
+        <ul class="list-group list-group-flush">
+          {% for spec in specs %}<li class="list-group-item">{{ spec.property_name }}: {{ spec.value_text }}{% if spec.unit %} ({{ spec.unit }}){% endif %}
+            <a class="small" href="{{ spec.source_url }}" rel="noopener noreferrer" target="_blank">{{ spec.get_source_kind_display }}</a></li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}{% endwith %}
     {% if accessories %}
       <div class="card mb-4">
         <div class="card-header">Zubehör</div>

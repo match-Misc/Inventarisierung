@@ -6,13 +6,14 @@ app_name = "loans"
 
 
 def _action(slug, action):
-    return path(f"buchungen/<int:pk>/{slug}/", views.booking_action, {"action": action}, name=action)
+    return path(f"<int:pk>/{slug}/", views.booking_action, {"action": action}, name=action)
 
 
+# Eingebunden unter /ausleihen/ (die KI-Suche verlinkt auf /ausleihen/neu/<gerät>/)
 urlpatterns = [
-    path("geraete/<int:pk>/buchen/", views.book_item, name="book"),
-    path("buchungen/<int:pk>/rueckgabe/", views.return_booking, name="return"),
-    path("buchungen/<int:pk>/verlaengern/", views.extend_booking, name="extend"),
+    path("neu/<int:pk>/", views.book_item, name="book"),
+    path("<int:pk>/rueckgabe/", views.return_booking, name="return"),
+    path("<int:pk>/verlaengern/", views.extend_booking, name="extend"),
     _action("genehmigen", "approve"),
     _action("ablehnen", "reject"),
     _action("stornieren", "cancel"),

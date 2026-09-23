@@ -19,6 +19,7 @@ Deshalb bauen wir ein **webbasiertes Inventarisierungs- und Ausleihtool**:
 - Ein **Buchungskalender** zeigt laufende Ausleihen, Reservierungen und offene Anfragen. Überschneidungen werden verhindert.
 - Jedes Gerät hat eine **Detailseite** mit Fotos, Handbüchern und Dokumenten, Beschreibung, Ablageort und Zubehör.
 - **E-Mails** gehen bei Anfragen und Entscheidungen raus. Dazu kommen **tägliche Erinnerungen** (Rückgabe fällig oder überfällig, Reservierung beginnt, offene Anfragen).
+- Eine **KI-gestützte Inventarsuche** übersetzt deutschsprachige Aufgaben in lokale Suchkriterien und darf fehlende technische Kennwerte quellenbasiert recherchieren. Personen-, Standort- und Buchungsdaten werden nicht an den KI-Dienst übertragen.
 
 ## 2. Tech-Stack und Grundsatzentscheidungen
 
@@ -28,7 +29,7 @@ Deshalb bauen wir ein **webbasiertes Inventarisierungs- und Ausleihtool**:
 | Datenbank | SQLite (Entwicklung), PostgreSQL (Betrieb), gesetzt über `DATABASE_URL` |
 | Frontend | Django-Templates (serverseitig), Bootstrap 5.3, Bootstrap Icons, HTMX 2 |
 | Kalender | FullCalendar 6.1 (Standard-Bundle, MIT) |
-| Pakete | django-environ, django-filter, django-crispy-forms + crispy-bootstrap5, django-htmx, Pillow, whitenoise, psycopg, gunicorn |
+| Pakete | django-environ, django-filter, django-crispy-forms + crispy-bootstrap5, django-htmx, Pillow, Pint, whitenoise, psycopg, gunicorn |
 | Qualität | pytest + pytest-django + factory_boy, ruff (Lint + Format), CI mit GitHub Actions |
 | Betrieb | Docker Compose (App + PostgreSQL) hinter dem HTTPS-Reverse-Proxy der IT |
 
@@ -55,6 +56,7 @@ inventory/   Category/Location (Baumstruktur mit gespeichertem `path`), Item, It
              ItemDocument, Accessory; Bildverarbeitung (images.py), Validatoren, Signale
 loans/       Booking (Statusmaschine), ReminderLog, services.py (Fachlogik), notifications.py,
              Kalender-Feed, Management-Commands (send_reminders, seed_demo)
+assistant_search/ KI-Suchabsicht, lokale Suche, OpenRouter-Anbindung, geprüfte Kennwerte
 floorplan/   Hallenplan (Issue #9): FloorPlan, PlanElement, services.py (Speichern + Orts-Abgleich),
              pptx_import.py + Command import_floorplan; Editor in static/js/floorplan.js
 templates/   base.html, registration/, email/ (Text-Mails), partials/
@@ -126,6 +128,14 @@ Regeln:
 - **Alle Statuswechsel laufen über `loans/services.py`.** Das gilt für Views, Admin-Aktionen und Commands, und dort sollen auch die Tests ansetzen. Die Funktionen laufen in `transaction.atomic()` und sperren das Gerät mit `select_for_update()`. Fachliche Fehler lösen `BookingError` aus (die Meldung wird Nutzer:innen angezeigt), fehlende Rechte `PermissionDenied`.
 - **E-Mails** werden mit `transaction.on_commit` verschickt. Ein Versandfehler wird nur geloggt und blockiert nichts. In Tests `django_capture_on_commit_callbacks(execute=True)` verwenden.
 
+### KI-Inventarsuche
+
+- OpenRouter erhält ausschließlich die Nutzerfrage und bei einer Recherche Hersteller, Modell und gesuchten Kennwert. Verantwortliche, Standorte, Serien-/Inventarnummern und Buchungen bleiben lokal.
+- Das Modell erzeugt Suchkriterien, aber weder SQL noch Buchungen. Zahlen- und Einheitenvergleiche erfolgen lokal mit Pint.
+- Webtreffer werden nur als ungeprüfte `SpecificationProposal` gespeichert, wenn eine HTTPS-Quelle in den API-Zitationen enthalten ist. Erst Verantwortliche oder Admins übernehmen sie als `ItemSpecification`.
+- Der Browser hält höchstens den aktuellen Chat in `sessionStorage`. Der Server speichert keine Chat-Historie.
+- Requests verlangen Zero Data Retention und verbieten Datenverwendung beim Provider. Ohne KI-Schlüssel oder bei einem Provider-Ausfall bleibt die lokale Suche nutzbar.
+
 ## 5. Projektplan und Stand der Umsetzung
 
 Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im selben PR ab.
@@ -135,15 +145,15 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [x] Custom User (`accounts.User`), Admin mit Aktion „Einladung senden“, Profil-View
    - [x] Vendor-Bibliotheken in `static/vendor/`
    - [x] ruff- und pytest-Konfiguration (`pyproject.toml`), `.env.example`
-   - [x] `base.html` mit Navigationsleiste und Login-Template (schlanke Fassung aus #9, wird mit #2 ausgebaut)
-   - [ ] Templates für „Passwort vergessen“ und „Passwort setzen“, `templates/email/invitation.txt` (#6)
+   - [x] `base.html` mit Navigationsleiste und Login-Template
+   - [ ] Templates für Passwortseiten und `templates/email/invitation.txt`
    - [x] CI-Workflow (`.github/workflows/ci.yml`: ruff, `makemigrations --check`, `check`, pytest)
-2. **Inventar** (#1, #2)
+2. **Inventar**
    - [x] Modelle und Migrationen (inklusive Startkategorien Sensoren/Aktoren/Werkzeuge/Sonstiges), Django-Admin
    - [x] Bildverarbeitung (`images.py`), Upload-Validatoren, Aufräumen der Dateien beim Löschen (`signals.py`)
    - [ ] Formulare (ItemForm mit Zubehör-Formset, Upload mehrerer Fotos, DocumentForm, LocationForm), Filter (django-filter)
-   - [x] Schlanke Geräteliste (Suche, Kategorie, Status) und Detailseite mit Ausleihfunktionen (aus #3)
-   - [ ] Views und Templates: Liste mit Suche und Filtern (HTMX), Detailseite ausbauen (Fotos, Dokumente verwalten), Anlegen, Bearbeiten, Duplizieren (`?vorlage=<id>`), Ausmustern, Fotos und Dokumente, Orte (mit HTMX-Modal), geschützte Medien-View
+   - [x] Geräteliste (Suche, Kategorie, Status) unter `/geraete/`, Detailseite mit Ausleihfunktionen und geprüften Kennwerten, geschützte Medien-View
+   - [ ] Views und Templates: Liste mit Suche und Filtern (HTMX), Detailseite ausbauen (Fotos, Dokumente verwalten), Anlegen, Bearbeiten, Duplizieren (`?vorlage=<id>`), Ausmustern, Fotos und Dokumente, Orte (mit HTMX-Modal)
 3. **Ausleihe** (#3, #4)
    - [x] Modelle `Booking` und `ReminderLog`, Context-Processor für das Badge mit offenen Anfragen
    - [x] `services.py` (alle Übergänge und die Konfliktprüfung), `notifications.py` und E-Mail-Templates
@@ -156,12 +166,16 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [ ] `Dockerfile` und `compose.yaml` (web + postgres)
    - [ ] README-Abschnitt zu Betrieb und Backup
    - [ ] `check --deploy` sauber
-
 8. **Hallenplan** (#9)
    - [x] Modelle, PPTX-Import, Plan-Ansicht mit Gerätesuche und Seitenleiste, Editor für Admins, Tests
-   - [ ] Link „Auf dem Hallenplan zeigen“ auf der Gerätedetailseite (sobald es #2 gibt), in der Seitenleiste auf die Detailseite statt auf den Admin verlinken
+   - [x] Link „Auf dem Hallenplan zeigen“ auf der Gerätedetailseite und Link von der Seitenleiste zur Detailseite
+9. **KI-Inventarsuche**
+   - [x] Chat unter `/assistent/`, lokale Kandidatensuche und physikalische Einheitenprüfung
+   - [x] kostenbegrenzte OpenRouter-Anbindung mit lokaler Ausweichsuche und Datenschutzfiltern
+   - [x] Quellenprüfung und Freigabeworkflow für recherchierte Kennwerte
+   - [x] Weiterleitung zu Detailseite und bestätigtem Buchungsformular
 
-**Weitere Issues (noch nicht eingeplant):** #7 Erkennung über das Typenschild, #8 Textsuche mit LLM/KI, #10 Geräteliste importieren, #11 und #12 Geräte- bzw. Inventarliste aus dem Bestellungsordner.
+**Weitere Issues (noch nicht eingeplant):** #7 Erkennung über das Typenschild, #10 Geräteliste importieren, #11 und #12 Geräte- bzw. Inventarliste aus dem Bestellungsordner.
 
 **Später:** LDAP-Anbindung, QR-Etiketten, Änderungshistorie, Aufbewahrungsfrist für die Ausleihhistorie.
 
@@ -206,6 +220,7 @@ python manage.py check                     # Django-Systemprüfung
 python manage.py import_floorplan skizze.pptx --name Versuchsfeld   # Hallenplan aus PowerPoint übernehmen
 python manage.py send_reminders            # tägliche Erinnerungen (in Arbeit, Schritt 6)
 python manage.py seed_demo                 # Testnutzer, Beispielgeräte und -buchungen (nur mit DEBUG=True)
+python manage.py expire_bookings           # verstrichene Anfragen/Reservierungen freigeben
 ```
 
 **Konten anlegen:** Unter `/admin/` ein neues Konto anlegen, mit der Institutskennung als Benutzername und E-Mail-Adresse. „Passwortbasierte Anmeldung“ bleibt deaktiviert. Danach in der Nutzerliste die Aktion **„Einladung senden“** wählen; die Person bekommt dann einen Link, über den sie ihr Passwort selbst setzt.

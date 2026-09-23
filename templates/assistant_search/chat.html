@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}KI-Suche{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-9">
+  <h1>Geräte mit dem Assistenten finden</h1>
+  <p class="text-muted">Beschreibe deine Aufgabe, zum Beispiel: „Ich möchte eine Kraft im Bereich von 200 N messen.“ Antworten beruhen auf dem Inventar; technische Kennwerte sind nur mit Quelle belastbar. Chatfragen werden an OpenRouter gesendet. Bitte keine vertraulichen Projekt- oder Personendaten eingeben.</p>
+  <div id="chat-log" class="chat-log border rounded p-3 mb-3" aria-live="polite"><p class="text-muted">Wie kann ich dir bei der Geräteauswahl helfen?</p></div>
+  <form id="chat-form" data-user="{{ user.pk }}">{% csrf_token %}<label for="chat-question" class="form-label">Deine Frage</label><textarea id="chat-question" class="form-control mb-2" rows="3" maxlength="2000" required></textarea><button id="chat-submit" class="btn btn-primary" type="submit">Suchen</button></form>
+</div></div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/assistant.js' %}" defer></script>{% endblock %}

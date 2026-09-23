@@ -1,5 +1,10 @@
+import mimetypes
+from pathlib import Path
+
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models import Exists, OuterRef, Q
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
@@ -45,7 +50,10 @@ def item_list(request):
 
 
 def item_detail(request, pk):
-    item = get_object_or_404(Item.objects.select_related("category", "location", "responsible"), pk=pk)
+    item = get_object_or_404(
+        Item.objects.select_related("category", "location", "responsible").prefetch_related("specifications"),
+        pk=pk,
+    )
     today = timezone.localdate()
     can_manage = item.can_manage(request.user)
     bookings = item.bookings.select_related("borrower").order_by("start_date")
@@ -68,3 +76,20 @@ def item_detail(request, pk):
         "today": today,
     }
     return render(request, "inventory/item_detail.html", context)
+
+
+# Bilder und PDFs zeigt der Browser direkt an, alles andere wird nur heruntergeladen.
+INLINE_TYPES = {"application/pdf", "image/jpeg", "image/png", "image/gif", "image/webp", "text/plain"}
+
+
+def serve_media(request, path):
+    """Hochgeladene Dateien nur für angemeldete Nutzer (LoginRequiredMiddleware)."""
+    root = Path(settings.MEDIA_ROOT).resolve()
+    target = (root / path).resolve()
+    if not target.is_relative_to(root) or not target.is_file():
+        raise Http404
+    content_type, encoding = mimetypes.guess_type(target.name)
+    inline = content_type in INLINE_TYPES and encoding is None
+    response = FileResponse(target.open("rb"), as_attachment=not inline, filename=target.name)
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
