@@ -58,14 +58,29 @@ def _request(messages, *, schema=None, web=False):
         },
         method="POST",
     )
-    try:
-        with urlopen(request, timeout=20) as response:
-            data = json.load(response)
-        return data["choices"][0]["message"]
-    except (HTTPError, URLError, TimeoutError, KeyError, ValueError) as exc:
-        # Keine Anfrageinhalte oder Schlüssel protokollieren.
-        logger.warning("KI-Dienst nicht verfügbar: %s", type(exc).__name__)
-        raise ProviderUnavailable("Der KI-Dienst ist momentan nicht verfügbar.") from exc
+    last_error = None
+    for attempt in range(2):
+        try:
+            with urlopen(request, timeout=20) as response:
+                data = json.load(response)
+            message = data["choices"][0]["message"]
+            if not isinstance(message, dict) or not isinstance(message.get("content"), str):
+                raise ValueError("Unvollständige Anbieterantwort")
+            return message
+        except HTTPError as exc:
+            last_error = exc
+            if attempt == 0 and exc.code in {408, 429, 500, 502, 503, 504, 529}:
+                continue
+            break
+        except (URLError, TimeoutError, IndexError, KeyError, TypeError, ValueError) as exc:
+            last_error = exc
+            if attempt == 0:
+                continue
+            break
+
+    # Keine Anfrageinhalte oder Schlüssel protokollieren.
+    logger.warning("KI-Dienst nicht verfügbar: %s", type(last_error).__name__)
+    raise ProviderUnavailable("Der KI-Dienst ist momentan nicht verfügbar.") from last_error
 
 
 INTENT_SCHEMA = {

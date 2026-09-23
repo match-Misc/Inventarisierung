@@ -172,6 +172,39 @@ def test_provider_enforces_privacy_routing(monkeypatch, settings):
     assert "temperature" not in captured["payload"]
 
 
+def test_provider_retries_an_incomplete_response(monkeypatch, settings):
+    settings.OPENROUTER_API_KEY = "test-key"
+    responses = iter(
+        [
+            b'{"error":{"message":"temporary"}}',
+            b'{"choices":[{"message":{"content":"ok"}}]}',
+        ]
+    )
+    calls = 0
+
+    class FakeResponse:
+        def __init__(self, data):
+            self.data = data
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return self.data
+
+    def fake_urlopen(request, timeout):
+        nonlocal calls
+        calls += 1
+        return FakeResponse(next(responses))
+
+    monkeypatch.setattr("assistant_search.provider.urlopen", fake_urlopen)
+    assert _request([{"role": "user", "content": "Kraftsensor"}])["content"] == "ok"
+    assert calls == 2
+
+
 @pytest.mark.django_db
 def test_chat_requires_login_and_does_not_store_history(client, people, inventory):
     _, borrower, _ = people
