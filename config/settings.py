@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "accounts",
     "inventory",
     "loans",
+    "procurement",
 ]
 
 MIDDLEWARE = [
@@ -117,6 +118,9 @@ STORAGES = {
 
 MAX_PHOTO_UPLOAD_MB = env.int("MAX_PHOTO_UPLOAD_MB", default=25)
 MAX_DOCUMENT_UPLOAD_MB = env.int("MAX_DOCUMENT_UPLOAD_MB", default=100)
+
+# Basisordner der Bestellungen (siehe procurement.management.commands.sync_bestellungen).
+BESTELLUNGEN_DIR = env("BESTELLUNGEN_DIR", default=str(BASE_DIR.parent / "01_Bestellungen"))
 
 # E-Mail, z. B. EMAIL_URL=smtp+tls://benutzer:passwort@smtp.example.org:587
 # Ohne EMAIL_URL werden Mails nur auf der Konsole ausgegeben.
