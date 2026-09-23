@@ -190,3 +190,28 @@ class TestSyncBestellungenCommand:
 
         order = PurchaseOrder.objects.get(source_folder="2025/2025-01 Testgerät")
         assert order.price is None or isinstance(order.price, Decimal)
+
+
+@pytest.mark.django_db
+class TestPurchaseOrderList:
+    def test_requires_login(self, client):
+        response = client.get("/bestellungen/")
+
+        assert response.status_code == 302
+        assert response.url.startswith("/konto/login/")
+
+    def test_shows_orders_in_application_layout(self, client, user):
+        PurchaseOrder.objects.create(
+            source_folder="2025/2025-09 Kraftsensor",
+            name="Kraftsensor 500 N",
+            company="Beispiel Messtechnik",
+            tool_type=PurchaseOrder.ToolType.SENSOR,
+        )
+        client.force_login(user)
+
+        response = client.get("/bestellungen/")
+
+        assert response.status_code == 200
+        assert response.context["orders"].count() == 1
+        assert b"Kraftsensor 500 N" in response.content
+        assert b"navbar" in response.content

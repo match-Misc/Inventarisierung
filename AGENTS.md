@@ -51,12 +51,13 @@ Festgelegte Annahmen (nicht ohne Rücksprache ändern):
 
 ```
 config/      settings.py (alles über Umgebungsvariablen), urls.py, wsgi.py
-accounts/    User-Modell (AbstractUser + phone, room, email_reminders), Profil, Einladungen
+accounts/    User-Modell, Profile, Einladungen und NotificationPreferences
 inventory/   Category/Location (Baumstruktur mit gespeichertem `path`), Item, ItemPhoto,
              ItemDocument, Accessory; Bildverarbeitung (images.py), Validatoren, Signale
 loans/       Booking (Statusmaschine), ReminderLog, services.py (Fachlogik), notifications.py,
              Kalender-Feed, Management-Commands (send_reminders, seed_demo)
 assistant_search/ KI-Suchabsicht, lokale Suche, OpenRouter-Anbindung, geprüfte Kennwerte
+procurement/ Bestellungen-Datenbank, Ordnerimport und monatlicher Sync
 floorplan/   Hallenplan (Issue #9): FloorPlan, PlanElement, services.py (Speichern + Orts-Abgleich),
              pptx_import.py + Command import_floorplan; Editor in static/js/floorplan.js
 templates/   base.html, registration/, email/ (Text-Mails), partials/
@@ -157,6 +158,12 @@ Regeln:
 - Entwurfsfotos verfallen nach 24 Stunden und werden beim nächsten Aufruf der Eingabeseite unter `MEDIA_ROOT/.recognition-drafts/` bereinigt. Sie sind nicht über die allgemeine Medien-View zugänglich und nur über die Sitzung des hochladenden Nutzers abrufbar. Ohne KI-Schlüssel bleibt das manuelle Anlegen möglich.
 - Die Eingabeseite zeigt während der Erkennung echte Verarbeitungsschritte aus einer Streaming-Antwort: Upload, Erkennung, gegebenenfalls öffentliche Recherche und Vorbereitung des Vorschlags. Das Formular bleibt auch ohne Streaming nutzbar.
 
+### Bestellungen
+
+- `PurchaseOrder` bildet die Einträge aus `01_Bestellungen` getrennt vom buchbaren Inventar ab.
+- `python manage.py sync_bestellungen` liest die Jahres- und Bestellordner ein. Manuell geprüfte Einträge werden dabei nicht überschrieben; fehlende Ordner werden markiert.
+- Der Quellordner wird nur relativ gespeichert. Die Übersicht unter `/bestellungen/` ist wie die übrige Anwendung loginpflichtig.
+
 ## 5. Projektplan und Stand der Umsetzung
 
 Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im selben PR ab.
@@ -197,8 +204,10 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [x] Weiterleitung zu Detailseite und bestätigtem Buchungsformular
 10. **Geräteerkennung**
    - [x] Foto-/Namenseingabe, Schwierigkeitsstufen, quellengebundene Typrecherche, bearbeitbarer Vorschlag und bestätigtes Anlegen
+11. **Bestellungen-Datenbank**
+   - [x] Modell, 367 importierte Bestellungen, Filteransicht, Admin und monatlicher Ordner-Sync
 
-**Weitere Issues (noch nicht eingeplant):** #10 Geräteliste importieren, #11 und #12 Geräte- bzw. Inventarliste aus dem Bestellungsordner.
+**Weitere Issues (noch nicht eingeplant):** #10 Geräteliste importieren; Verknüpfung von Bestellungen mit physischen Inventargegenständen.
 
 **Später:** LDAP-Anbindung, QR-Etiketten, Änderungshistorie, Aufbewahrungsfrist für die Ausleihhistorie.
 
@@ -241,6 +250,7 @@ pytest                                     # Tests
 ruff check . && ruff format .              # Lint und Format (vor jedem Commit)
 python manage.py check                     # Django-Systemprüfung
 python manage.py import_floorplan skizze.pptx --name Versuchsfeld   # Hallenplan aus PowerPoint übernehmen
+python manage.py sync_bestellungen             # Bestellordner mit der Datenbank abgleichen
 python manage.py send_reminders            # tägliche Erinnerungen (einmal täglich einplanen)
 python manage.py seed_demo                 # Testnutzer, Beispielgeräte und -buchungen (nur mit DEBUG=True)
 python manage.py expire_bookings           # verstrichene Anfragen/Reservierungen freigeben
