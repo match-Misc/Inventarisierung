@@ -223,6 +223,32 @@ class TestPurchaseOrderList:
 
 @pytest.mark.django_db
 class TestImportPurchaseDevicesCommand:
+    def test_skips_general_computers_but_keeps_industrial_pc(self, staff):
+        excluded_orders = [
+            PurchaseOrder.objects.create(
+                source_folder=f"2025/{position:02d} {name}",
+                name=name,
+                tool_type=PurchaseOrder.ToolType.IT,
+            )
+            for position, name in enumerate(
+                ("Alternate_Notebook-Klingeberg", "Dell_Server", "iPhone SE"), start=1
+            )
+        ]
+        industrial_pc = PurchaseOrder.objects.create(
+            source_folder="2026/2026-05 Beckhoff IPC C6043 ML BiBaZu",
+            name="Beckhoff IPC C6043 ML BiBaZu",
+            tool_type=PurchaseOrder.ToolType.IT,
+        )
+
+        call_command("import_purchase_devices", responsible=staff.username)
+
+        for order in excluded_orders:
+            order.refresh_from_db()
+            assert order.inventory_item is None
+        industrial_pc.refresh_from_db()
+        assert industrial_pc.inventory_item is not None
+        assert industrial_pc.inventory_item.manufacturer == "Beckhoff"
+
     def test_creates_unverified_device_and_is_idempotent(self, staff, client):
         order = PurchaseOrder.objects.create(
             source_folder="2014/2014-07 CalPlus_Handmultimeter",

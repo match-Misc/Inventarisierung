@@ -164,6 +164,7 @@ Regeln:
 - `python manage.py sync_bestellungen` liest die Jahres- und Bestellordner ein. Manuell geprüfte Einträge werden dabei nicht überschrieben; fehlende Ordner werden markiert.
 - Der Quellordner wird nur relativ gespeichert. Die Übersicht unter `/bestellungen/` ist wie die übrige Anwendung loginpflichtig.
 - Eindeutige Einzelgeräte werden mit `python manage.py import_purchase_devices --responsible <kennung> [--research]` idempotent ins Inventar übernommen und über `PurchaseOrder.inventory_item` mit allen Bestelldaten verknüpft. Sammelbestellungen, Material, Software, Dienstleistungen und unklare Einträge bleiben unverknüpft.
+- Allgemeine Laptops, Desktop- und Arbeitsplatzrechner, Tablets, Server und Smartphones werden nicht ins Inventar übernommen. Industrie-, Steuerungs- und Bildverarbeitungsrechner wie Beckhoff-IPCs bleiben zulässige Inventargeräte.
 - Importierte Geräte erhalten zunächst den Ort „Noch nicht zugeordnet“, die Ausleihregel „Nur mit Genehmigung“ und den Zustand „Ungeprüft“. Sie sind damit nicht buchbar, bis Stammdaten, Ort, Verantwortlichkeit und Zustand geprüft wurden.
 - Die öffentliche Produktrecherche erhält nur kuratierte technische Produktbezeichnungen ohne Personen-, Raum- oder Projektbezug. Beschreibungen und Kennwerte brauchen eine zitierte HTTPS-Quelle; Kennwerte landen als ungeprüfte `SpecificationProposal` in der bestehenden Prüfliste.
 
@@ -209,7 +210,7 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [x] Foto-/Namenseingabe, Schwierigkeitsstufen, quellengebundene Typrecherche, bearbeitbarer Vorschlag und bestätigtes Anlegen
 11. **Bestellungen-Datenbank**
    - [x] Modell, 367 importierte Bestellungen, Filteransicht, Admin und monatlicher Ordner-Sync
-   - [x] 167 eindeutige Bestellungen mit Inventargeräten verknüpft (164 neu, 3 vorhanden), Bestelldaten auf der Gerätedetailseite
+   - [x] 134 eindeutige Bestellungen mit Inventargeräten verknüpft (131 neu, 3 vorhanden), Bestelldaten auf der Gerätedetailseite; allgemeine IT-Geräte ausgeschlossen
    - [x] Quellengebundene Produktrecherche: 34 genaue Typen recherchiert, 133 mangels eindeutiger Typvariante als ungeprüft markiert
 12. **Gestaltung der Nutzerwebsite**
    - [x] Grau-grünes Layout für Navigation, Login, Dashboard, Formulare, Tabellen und Funktionsseiten; responsive Menüstruktur und kontrastreiche Fokusmarkierungen

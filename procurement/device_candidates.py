@@ -174,6 +174,50 @@ CLEAR_DEVICE_NAMES = frozenset(
     ]
 )
 
+# Allgemeine Arbeitsplatzrechner, Tablets, Server und Smartphones gehören nicht
+# in das Geräteinventar.
+# Spezialisierte Industrie-, Steuerungs- und Bildverarbeitungsrechner bleiben dagegen
+# als Forschungsgeräte erhalten.
+EXCLUDED_IT_DEVICE_NAMES = frozenset(
+    {
+        "Alternate_Hiwi-Rechner",
+        "Alternate_Mini-PC-MiR",
+        "Alternate_Notebook-Klingeberg",
+        "Alternate_Razer-Blade",
+        "Amazon_Surface_Pro",
+        "Apple_iPad-Pro-Raatz",
+        "CSL_Studi-Rechner-MLL",
+        "Computer-Versuchsfeld",
+        "Cyberport_iPad-PM",
+        "Dell_Server",
+        "Dell_Notebook-Binnemann",
+        "Dell_Notebook-Lurz",
+        "Dell_Notebook-Terei",
+        "Laptop Peters",
+        "Notebook Ince",
+        "Notebook Kleinschmidt",
+        "Notebook Raatz",
+        "Notebook Sourkounis",
+        "Notebook Wendorff",
+        "Notebook Westermann",
+        "Notebook-Gerland",
+        "Notebooksbilliger_Notebook-Annika",
+        "Notebooksbilliger_Notebook-Ditzia",
+        "Notebooksbilliger_Notebook-Lachmayer",
+        "Notebooksbilliger_Notebook-Richard",
+        "ROS-Simulations-PC",
+        "Raatz Iphone",
+        "Raatz Surface",
+        "Raatz_Apple_Diensthandy-Annika",
+        "Source-IT_ROS-PC",
+        "VisaRaatz_Apple_IPadPro",
+        "Workstation Tschöke",
+        "iPhone SE",
+    }
+)
+
+CLEAR_DEVICE_NAMES -= EXCLUDED_IT_DEVICE_NAMES
+
 
 # Nur technische Produktbezeichnungen ohne Personen-, Raum- oder Projektbezug dürfen
 # an die öffentliche Recherche gehen. Fehlt ein eindeutiger Typ, bleibt die Recherche
