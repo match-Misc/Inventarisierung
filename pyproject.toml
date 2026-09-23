@@ -14,7 +14,7 @@ select = ["E", "F", "W", "I", "B", "UP", "DJ", "SIM"]
 ignore = ["E501"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["config", "accounts", "inventory", "loans"]
+known-first-party = ["config", "accounts", "inventory", "loans", "procurement"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"

@@ -1,3 +1,5 @@
+"""Gemeinsame Testkonfiguration. Tests laufen mit DEBUG=False (siehe AGENTS.md)."""
+
 import pytest
 
 from accounts.models import User
