@@ -1,0 +1,7 @@
+{% autoescape off %}Hallo {{ recipient.first_name|default:recipient.username }},
+
+„{{ item.name }}“ wurde gerade zurückgegeben und liegt wieder in {{ item.location }}.
+Deine Reservierung: {{ booking.start_date|date:"d.m.Y" }} bis {{ booking.end_date|date:"d.m.Y" }}.
+
+Bitte bestätige die Entnahme im Tool, wenn du das Gerät holst: {{ dashboard_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}

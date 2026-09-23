@@ -1,0 +1,8 @@
+{% autoescape off %}Hallo {{ recipient.first_name|default:recipient.username }},
+
+diese Anfragen warten noch auf deine Entscheidung:
+{% for booking in bookings %}
+- {{ booking.item.name }}: {{ booking.borrower.display_name }}, {% if booking.requested_end_date %}Verlängerung bis {{ booking.requested_end_date|date:"d.m.Y" }}{% else %}{{ booking.start_date|date:"d.m.Y" }} bis {{ booking.end_date|date:"d.m.Y" }}{% endif %}{% endfor %}
+
+Genehmigen oder ablehnen: {{ dashboard_url }}
+{% include "email/_footer.txt" %}{% endautoescape %}

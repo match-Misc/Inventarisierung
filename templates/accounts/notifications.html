@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Benachrichtigungen{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8">
+  <h1 class="h3 mb-3">Mein Konto</h1>
+  {% include "accounts/_nav.html" with active="notifications" %}
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <div class="me-auto small text-body-secondary">E-Mails gehen an <strong>{{ user.email|default:"– keine Adresse hinterlegt –" }}</strong>{% if not user.email %} · <a href="{% url 'accounts:profile' %}">im Profil ergänzen</a>{% endif %}.</div>
+    <form method="post" action="{% url 'accounts:test_mail' %}">{% csrf_token %}
+      <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-envelope-check"></i> Testmail senden</button>
+    </form>
+  </div>
+  <form method="post">{% csrf_token %}
+    <div class="card mb-3"><div class="card-body">
+      {{ form.enabled|as_crispy_field }}
+    </div></div>
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-box-arrow-right"></i> Wenn ich etwas ausleihe</div>
+      <div class="card-body">
+        {{ form.booking_updates|as_crispy_field }}
+        <div class="row">
+          <div class="col-md-6">{{ form.start_reminder|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.due_reminder|as_crispy_field }}</div>
+        </div>
+        {{ form.overdue_interval|as_crispy_field }}
+        {{ form.item_available|as_crispy_field }}
+      </div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-person-badge"></i> Für Geräte, für die ich verantwortlich bin</div>
+      <div class="card-body">
+        {{ form.new_requests|as_crispy_field }}
+        {{ form.pending_digest|as_crispy_field }}
+        {{ form.owner_returns|as_crispy_field }}
+        {{ form.owner_activity|as_crispy_field }}
+        {{ form.owner_overdue|as_crispy_field }}
+      </div>
+    </div>
+    <button class="btn btn-primary">Einstellungen speichern</button>
+  </form>
+</div></div>
+{% endblock %}
