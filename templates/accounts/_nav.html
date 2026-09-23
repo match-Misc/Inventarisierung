@@ -1,0 +1,5 @@
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item"><a class="nav-link {% if active == 'profile' %}active{% endif %}" href="{% url 'accounts:profile' %}">Profil</a></li>
+  <li class="nav-item"><a class="nav-link {% if active == 'notifications' %}active{% endif %}" href="{% url 'accounts:notifications' %}">Benachrichtigungen</a></li>
+  <li class="nav-item"><a class="nav-link" href="{% url 'password_change' %}">Passwort ändern</a></li>
+</ul>

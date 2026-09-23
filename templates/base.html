@@ -47,7 +47,9 @@
               <i class="bi bi-person-circle"></i> {{ user.display_name }}
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="{% url 'password_change' %}">Passwort ändern</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person"></i> Mein Konto</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:notifications' %}"><i class="bi bi-bell"></i> Benachrichtigungen</a></li>
+              <li><a class="dropdown-item" href="{% url 'password_change' %}"><i class="bi bi-key"></i> Passwort ändern</a></li>
               {% if user.is_staff %}<li><a class="dropdown-item" href="{% url 'admin:index' %}">Verwaltung (Admin)</a></li>{% endif %}
               <li><hr class="dropdown-divider"></li>
               <li>
