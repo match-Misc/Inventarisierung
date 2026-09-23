@@ -20,3 +20,5 @@ known-first-party = ["config", "accounts", "inventory", "loans"]
 DJANGO_SETTINGS_MODULE = "config.settings"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+# WhiteNoise meldet das fehlende STATIC_ROOT (collectstatic läuft in Tests nicht)
+filterwarnings = ["ignore:No directory at:UserWarning"]

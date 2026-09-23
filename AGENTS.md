@@ -57,6 +57,8 @@ inventory/   Category/Location (Baumstruktur mit gespeichertem `path`), Item, It
 loans/       Booking (Statusmaschine), ReminderLog, services.py (Fachlogik), notifications.py,
              Kalender-Feed, Management-Commands (send_reminders, seed_demo)
 assistant_search/ KI-Suchabsicht, lokale Suche, OpenRouter-Anbindung, geprüfte Kennwerte
+floorplan/   Hallenplan (Issue #9): FloorPlan, PlanElement, services.py (Speichern + Orts-Abgleich),
+             pptx_import.py + Command import_floorplan; Editor in static/js/floorplan.js
 templates/   base.html, registration/, email/ (Text-Mails), partials/
 static/      css/, js/, img/, vendor/ (Bootstrap, Icons, htmx, FullCalendar)
 tests/       pytest-Tests (conftest.py, factories.py)
@@ -77,6 +79,27 @@ tests/       pytest-Tests (conftest.py, factories.py)
 - **Fotos** werden beim Upload EXIF-korrigiert, auf höchstens 2560 px verkleinert und als JPEG gespeichert, dazu entsteht ein Vorschaubild (`inventory/images.py`).
 - **Dokumente:** entweder eine Datei oder ein Link. HTML-, SVG- und JS-Uploads sind verboten.
 - **Mediendateien** liefert eine eigene View unter `/medien/` aus, nur für angemeldete Nutzer.
+
+### Hallenplan (`floorplan`, Issue #9)
+
+- **FloorPlan** gehört zu einem Ort, z. B. „Versuchsfeld“. Die Maße sind in Metern angegeben.
+- **PlanElement** ist ein Objekt auf dem Plan: Rechteck mit `x`, `y` (linke obere Ecke), `width`, `height`, `rotation`, `color` und `kind`.
+  - Mögliche Arten (`kind`): Bereich, Schrank, Tisch, Versuchsstand, Markierung, Sonstiges.
+- **Planobjekte sind Ablageorte:** Beschriftete Bereiche, Schränke, Tische und Versuchsstände bekommen automatisch einen Unterort des Plan-Orts, z. B. „Versuchsfeld › Schrank 3“.
+  - Ein Gerät erscheint auf dem Plan, wenn dieser Ort oder ein Unterort davon (z. B. „Schrank 3 › Fach 2“) sein Ablageort ist.
+  - Umbenennen im Editor benennt den Ort mit um.
+- **Speichern** läuft immer über `floorplan.services.save_plan()`, auch beim Import.
+  - Ein Objekt, in dem noch Geräte liegen, lässt sich weder löschen noch in eine Art ändern, die keine Geräte aufnimmt (`PlanError`).
+- **Rechte:** Ansehen dürfen alle. Den Editor (`/hallenplan/<id>/bearbeiten/`) und das Speichern dürfen nur Admins (`is_staff`).
+- **Verlinkung:**
+  - `/hallenplan/<id>/?geraet=<item_id>` markiert den Standort eines Geräts.
+  - `/hallenplan/<id>/?ort=<location_id>` markiert einen Ort.
+  - Die Detailseite eines Geräts (#2) soll auf diese URLs verlinken.
+- **PPTX-Import:** `python manage.py import_floorplan <datei.pptx> --name Versuchsfeld [--scale 1.0] [--replace]`
+  - Maßstab: 1 cm auf der Folie entspricht `scale` Metern.
+  - Übernommen werden nur Formen innerhalb der Folie. Textfelder, Linien und Notizen neben der Folie werden ignoriert.
+  - Gleich beschriftete Ablageorte werden durchnummeriert („Schrank 1“ …).
+  - Die PowerPoint-Vorlage (`Skizze_Hallenlayout_2024_alt.pptx`) liegt bewusst **nicht** im Repo, weil sie Namen und Notizen enthält.
 
 ### Buchungsstatus (`loans.models.Booking.Status`)
 
@@ -124,7 +147,7 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [x] ruff- und pytest-Konfiguration (`pyproject.toml`), `.env.example`
    - [x] `base.html` mit Navigationsleiste und Login-Template
    - [ ] Templates für Passwortseiten und `templates/email/invitation.txt`
-   - [ ] CI-Workflow (`.github/workflows/ci.yml`: ruff, `makemigrations --check`, `check`, pytest)
+   - [x] CI-Workflow (`.github/workflows/ci.yml`: ruff, `makemigrations --check`, `check`, pytest)
 2. **Inventar**
    - [x] Modelle und Migrationen (inklusive Startkategorien Sensoren/Aktoren/Werkzeuge/Sonstiges), Django-Admin
    - [x] Bildverarbeitung (`images.py`), Upload-Validatoren, Aufräumen der Dateien beim Löschen (`signals.py`)
@@ -144,13 +167,18 @@ Ein Häkchen heißt erledigt. Wer einen Schritt fertigstellt, hakt ihn hier im s
    - [ ] `Dockerfile` und `compose.yaml` (web + postgres)
    - [ ] README-Abschnitt zu Betrieb und Backup
    - [ ] `check --deploy` sauber
-8. **KI-Inventarsuche**
+8. **Hallenplan** (#9)
+   - [x] Modelle, PPTX-Import, Plan-Ansicht mit Gerätesuche und Seitenleiste, Editor für Admins, Tests
+   - [x] Link „Auf dem Hallenplan zeigen“ auf der Gerätedetailseite und Link von der Seitenleiste zur Detailseite
+9. **KI-Inventarsuche**
    - [x] Chat unter `/assistent/`, lokale Kandidatensuche und physikalische Einheitenprüfung
    - [x] kostenbegrenzte OpenRouter-Anbindung mit lokaler Ausweichsuche und Datenschutzfiltern
    - [x] Quellenprüfung und Freigabeworkflow für recherchierte Kennwerte
    - [x] Weiterleitung zu Detailseite und bestätigtem Buchungsformular
 
-**Später (nicht Teil des aktuellen Plans):** LDAP-Anbindung, QR-Etiketten, Excel-Import, Änderungshistorie, Aufbewahrungsfrist für die Ausleihhistorie.
+**Weitere Issues (noch nicht eingeplant):** #7 Erkennung über das Typenschild, #10 Geräteliste importieren, #11 und #12 Geräte- bzw. Inventarliste aus dem Bestellungsordner.
+
+**Später:** LDAP-Anbindung, QR-Etiketten, Änderungshistorie, Aufbewahrungsfrist für die Ausleihhistorie.
 
 ## 6. Installation (Entwicklung)
 
@@ -190,6 +218,7 @@ python manage.py migrate
 pytest                                     # Tests
 ruff check . && ruff format .              # Lint und Format (vor jedem Commit)
 python manage.py check                     # Django-Systemprüfung
+python manage.py import_floorplan skizze.pptx --name Versuchsfeld   # Hallenplan aus PowerPoint übernehmen
 python manage.py send_reminders            # tägliche Erinnerungen (in Arbeit, Schritt 6)
 python manage.py seed_demo                 # Demo-Daten (in Arbeit, Schritt 7)
 python manage.py expire_bookings           # verstrichene Anfragen/Reservierungen freigeben

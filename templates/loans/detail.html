@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Buchung {{ booking.pk }} · Geräteinventar{% endblock %}
+{% block title %}Buchung {{ booking.pk }}{% endblock %}
 {% block content %}
 <h1>Buchung: <a href="{{ booking.item.get_absolute_url }}">{{ booking.item.name }}</a></h1>
 <p class="lead">{{ booking.get_status_display }} · {{ booking.start_date|date:"d.m.Y" }} bis {{ booking.end_date|date:"d.m.Y" }}</p>

@@ -1,3 +1,3 @@
 {% extends "base.html" %}
-{% block title %}Kennwerte prüfen · Geräteinventar{% endblock %}
+{% block title %}Kennwerte prüfen{% endblock %}
 {% block content %}<h1>Kennwerte prüfen</h1><p>Recherchierte Werte werden erst nach deiner Prüfung als Geräteeigenschaften verwendet.</p><div class="list-group">{% for proposal in proposals %}<a class="list-group-item list-group-item-action" href="{% url 'assistant_search:review' proposal.pk %}"><strong>{{ proposal.item.name }}</strong> · {{ proposal.property_name }}: {{ proposal.value_text }} · {{ proposal.get_source_kind_display }}</a>{% empty %}<div class="alert alert-info">Keine offenen Kennwertvorschläge.</div>{% endfor %}</div>{% endblock %}

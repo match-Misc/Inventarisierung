@@ -10,6 +10,7 @@ admin.site.index_title = "Verwaltung"
 
 urlpatterns = [
     path("", dashboard, name="dashboard"),
+    path("hallenplan/", include("floorplan.urls")),
     path("geraete/", include("inventory.urls")),
     path("ausleihen/", include("loans.urls")),
     path("assistent/", include("assistant_search.urls")),

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Geräte · Geräteinventar{% endblock %}
+{% block title %}Geräte{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3"><h1>Geräte</h1><a class="btn btn-primary" href="{% url 'assistant_search:chat' %}">Mit KI suchen</a></div>
 <form method="get" class="row g-2 mb-4" role="search"><div class="col-md-8"><input class="form-control" name="q" value="{{ query }}" placeholder="Bezeichnung, Hersteller, Modell oder Beschreibung" aria-label="Geräte suchen"></div><div class="col-auto"><button class="btn btn-outline-primary">Suchen</button></div></form>

@@ -3,9 +3,11 @@ import pytest
 from accounts.models import User
 from inventory.models import Category, Item, Location
 
+from .factories import UserFactory
+
 
 @pytest.fixture(autouse=True)
-def local_test_settings(settings):
+def local_test_settings(settings, tmp_path):
     settings.DEBUG = False
     settings.SECURE_SSL_REDIRECT = False
     settings.STORAGES = {
@@ -13,6 +15,17 @@ def local_test_settings(settings):
         "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
     }
     settings.OPENROUTER_API_KEY = ""
+    settings.MEDIA_ROOT = tmp_path / "media"
+
+
+@pytest.fixture
+def user(db):
+    return UserFactory()
+
+
+@pytest.fixture
+def staff(db):
+    return UserFactory(is_staff=True)
 
 
 @pytest.fixture

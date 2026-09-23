@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ item.name }} buchen · Geräteinventar{% endblock %}
+{% block title %}{{ item.name }} buchen{% endblock %}
 {% block content %}
 <h1>{{ item.name }} buchen</h1><p>{{ item.get_loan_policy_display }}. Start- und Endtag gehören zum Zeitraum.</p>
 <form method="post" class="card card-body col-lg-7">{% csrf_token %}

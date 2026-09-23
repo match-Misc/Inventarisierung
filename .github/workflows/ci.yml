@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Abhängigkeiten installieren
+        run: pip install -r requirements-dev.txt
+      - name: Lint und Format
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Migrationen vollständig
+        run: python manage.py makemigrations --check --dry-run
+      - name: Django-Systemprüfung
+        run: python manage.py check
+      - name: Tests
+        run: pytest
