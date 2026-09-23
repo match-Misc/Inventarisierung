@@ -1,0 +1,22 @@
+[project]
+name = "inventarisierung"
+version = "0.1.0"
+description = "Webbasiertes Inventarisierungs- und Ausleihtool für Forschungsgeräte"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["static/vendor", "**/migrations/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["config", "accounts", "inventory", "loans"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
