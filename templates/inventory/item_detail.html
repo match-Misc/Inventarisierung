@@ -118,7 +118,8 @@
     {% endif %}
 
     <div class="card mb-4">
-      <div class="card-header">Kommende Buchungen</div>
+      <div class="card-header d-flex justify-content-between">Kommende Buchungen
+        <a class="small" href="{% url 'loans:calendar' %}?geraet={{ item.pk }}"><i class="bi bi-calendar3"></i> im Kalender</a></div>
       <ul class="list-group list-group-flush">
         {% for booking in upcoming %}
           <li class="list-group-item">

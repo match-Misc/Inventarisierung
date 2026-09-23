@@ -29,7 +29,10 @@
               {% if pending_approvals_count %}<span class="badge rounded-pill text-bg-warning" title="Offene Anfragen an dich">{{ pending_approvals_count }}</span>{% endif %}</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if namespace == 'inventory' or namespace == 'loans' %}active{% endif %}" href="{% url 'inventory:item_list' %}">Geräte</a>
+            <a class="nav-link {% if namespace == 'inventory' or namespace == 'loans' and url_name != 'calendar' %}active{% endif %}" href="{% url 'inventory:item_list' %}">Geräte</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if url_name == 'calendar' %}active{% endif %}" href="{% url 'loans:calendar' %}">Kalender</a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if namespace == 'assistant_search' and url_name == 'chat' %}active{% endif %}" href="{% url 'assistant_search:chat' %}">KI-Suche</a>

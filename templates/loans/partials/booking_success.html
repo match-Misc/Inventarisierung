@@ -1,0 +1,19 @@
+<div class="modal-header">
+  <h5 class="modal-title text-success"><i class="bi bi-check-circle"></i> Gebucht</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+</div>
+<div class="modal-body">
+  <p class="mb-0">
+    „{{ booking.item }}“
+    {% if booking.status == "requested" %}
+      wurde angefragt. {{ booking.item.responsible.display_name }} entscheidet über die Anfrage.
+    {% elif booking.status == "active" %}
+      ist ab jetzt an dich ausgeliehen, bis {{ booking.end_date|date:"d.m.Y" }}.
+    {% else %}
+      ist für dich reserviert, {{ booking.start_date|date:"d.m.Y" }}–{{ booking.end_date|date:"d.m.Y" }}.
+    {% endif %}
+  </p>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Schließen</button>
+</div>
